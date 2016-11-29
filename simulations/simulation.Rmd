@@ -187,7 +187,7 @@ plot_pvalue_scatter <- function(pvalue_mat, title){
 }
 ```
 
-# Test level: simulation under the null
+## Test level: simulation under the null
 
 Before testing for different kinds of effects, we begin checking that the tests have the correct level.
 We follow the procedure described above, using an effect size of $\gamma = 0$ at all sites and using standard normal errors.
@@ -215,11 +215,9 @@ design0_power <- apply(design0_pvalues, 2, compute_power)
 plot_power_curves(design0_power, "No Effect, Normal Errors")
 
 plot_pvalue_hist(design0_pvalues, "No Effect, Normal Errors")
-
-#plot_pvalue_scatter(design0_pvalues, "Simulation P-values for Data with \n No Effect, Normal Errors")
 ```
 
-# Design 1: Constant additive effect, normal errors
+## Design 1: Constant additive effect, normal errors
 
 There is no discernable difference in power between the ANOVA, the differenced stratified permutation test, the LM permutations, or the Freedman-Lane test.
 However, the simple stratified permutation test of $Y_1$ has substantially less power than the other four.
@@ -245,11 +243,9 @@ design1_power <- apply(design1_pvalues, 2, compute_power)
 plot_power_curves(design1_power, "Constant Additive Effect of 1, Normal Errors")
 
 plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 1, Normal Errors")
-
-#plot_pvalue_scatter(design1_pvalues, "Simulation P-values for Data with \n Constant Additive Effect of 1, Normal Errors")
 ```
 
-# Design 2: Single site effect, normal errors
+## Design 2: Single site effect, normal errors
 
 A similar pattern emerges: the simple stratified permutation test has low power, while the other four power curves roughly coincide.
 The Freedman-Lane test may have the highest power for small p-values, but this could also just be noise.
@@ -274,11 +270,9 @@ design2_power <- apply(design2_pvalues, 2, compute_power)
 plot_power_curves(design2_power, "Effect of 1 at a Single Site, Normal Errors")
 
 plot_pvalue_hist(design2_pvalues, "Effect of 1, Normal Errors")
-
-#plot_pvalue_scatter(design2_pvalues, "Simulation P-values for Data with \n Effect of 1 at a Single Site, Normal Errors")
 ```
 
-# Design 3: Constant additive effect, heavy-tailed errors
+## Design 3: Constant additive effect, heavy-tailed errors
 
 Again, we find that the four power curves coincide while the curve for the stratified permutation test is below the others.
 Here, the difference between the curves is not large.
@@ -303,11 +297,9 @@ design3_power <- apply(design3_pvalues, 2, compute_power)
 plot_power_curves(design3_power, "Constant Additive Effect of 1, Heavy-tailed Errors")
 
 plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 1, Heavy-tailed Errors")
-
-#plot_pvalue_scatter(design3_pvalues, "Simulation P-values for Data with \n Constant Additive Effect of 1, Heavy-tailed Errors")
 ```
 
-# Design 4: single site effect, heavy-tailed errors
+## Design 4: single site effect, heavy-tailed errors
 
 The noise from the heavy-tailed errors masks the treatment effect so much that controlling for baseline measures makes no difference.
 There is almost no power to detect an effect using any of the five tests.
@@ -331,12 +323,10 @@ design4_power <- apply(design4_pvalues, 2, compute_power)
 plot_power_curves(design4_power, "Effect of 1 at a Single Site, Heavy-tailed Errors")
 
 plot_pvalue_hist(design4_pvalues, "Effect of 1, Heavy-tailed Errors")
-
-#plot_pvalue_scatter(design4_pvalues, "Simulation P-values for Data with \n Effect of 1 at a Single Site, Heavy-tailed Errors")
 ```
 
 
-# Design 5: Unpredictive baseline
+## Design 5: Unpredictive baseline
 
 Suppose that the baseline measure is not strongly predictive of the outcome.
 Then, we'd expect that controlling for baseline will not improve the power of the test, and may even make it worse.
@@ -369,6 +359,128 @@ design5_power <- apply(design5_pvalues, 2, compute_power)
 plot_power_curves(design5_power, "Constant Additive Effect of 1, Normal Errors \n Unpredictive baseline")
 
 plot_pvalue_hist(design5_pvalues, "Constant Additive Effect of 1, Normal Errors \n Unpredictive baseline")
+```
 
-#plot_pvalue_scatter(design5_pvalues, "Simulation P-values for Data with \n Constant Additive Effect of 1, Normal Errors")
+
+# Imbalanced designs
+
+Suppose that instead of having 16 individuals per site, we distribute them unequally across sites:
+site 1 has 8 patients, site 2 has 16 patients, and site 3 has 24 patients.
+This imbalance does not violate any assumptions of the ANOVA.
+However, it may reduce power if the effect is concentrated in sites with fewer patients.
+
+## Design 6: Constant additive effect, normal errors
+
+The power curves here are very similar to those in Design 1.
+This result is expected, since the effect is still present among all patients who received treatment.
+
+```{r design6, fig.height = 4}
+set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
+
+tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal", n = c(8, 16, 24))
+design6_pvalues <- replicate(100, {
+  tmp$epsilon <- rnorm(nrow(tmp))
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
+  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  generate_simulated_pvalues(tmp)
+})
+
+design6_pvalues <- t(design6_pvalues)
+colnames(design6_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+design6_power <- apply(design6_pvalues, 2, compute_power)
+```
+
+```{r design6_plot, fig.height = 4, fig.align="center"}
+plot_power_curves(design6_power, "Constant Additive Effect of 1, Normal Errors")
+
+plot_pvalue_hist(design6_pvalues, "Constant Additive Effect of 1, Normal Errors")
+```
+
+## Design 7: Single site effect, normal errors
+
+There is very low power to detect the effect here, since in the simulated data, the site with only 8 patients was the only site with a nonzero effect of treatment.
+The treatment effect is on the same order of magnitude as the error variance.
+
+```{r design7, fig.height = 4}
+set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
+
+tmp <- generate_simulated_data(gamma = 1, effect = "single site effect", errors = "normal", n = c(8, 16, 24))
+design7_pvalues <- replicate(100, {
+  tmp$epsilon <- rnorm(nrow(tmp))
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
+  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  generate_simulated_pvalues(tmp)
+})
+design7_pvalues <- t(design7_pvalues)
+colnames(design7_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+design7_power <- apply(design7_pvalues, 2, compute_power)
+```
+
+```{r design7_plot, fig.height = 4, fig.align="center"}
+plot_power_curves(design7_power, "Effect of 1 at a Single Site, Normal Errors")
+
+plot_pvalue_hist(design7_pvalues, "Effect of 1, Normal Errors")
+```
+
+# Heteroskedastic errors
+
+One assumption of ANOVA is that errors are homoskedastic: they have the same variance across groups.
+Suppose that this does not hold in our data.
+Imagine we have three sites with 16 patients each, but they have different error distributions:
+site 1 has standard normal errors,
+site 2 has normally distributed errors with mean 0 and variance 2,
+and site 3 has errors with a $t$-distribution on 2 degrees of freedom.
+
+## Design 8: heteroskedastic errors, constant treatment effect
+
+```{r design8, fig.height = 4}
+set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
+nn <- 16
+
+tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal", n = rep(nn, 3))
+design8_pvalues <- replicate(100, {
+  tmp$epsilon[tmp$SITEID == 1] <- rnorm(nn)
+  tmp$epsilon[tmp$SITEID == 2] <- rnorm(nn, sd = sqrt(2))
+  tmp$epsilon[tmp$SITEID == 3] <- rt(nn, df = 2)
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
+  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  generate_simulated_pvalues(tmp)
+})
+
+design8_pvalues <- t(design8_pvalues)
+colnames(design8_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+design8_power <- apply(design8_pvalues, 2, compute_power)
+```
+
+```{r design8_plot, fig.height = 4, fig.align="center"}
+plot_power_curves(design8_power, "Constant Additive Effect of 1, Heteroskedastic Errors")
+
+plot_pvalue_hist(design8_pvalues, "Constant Additive Effect of 1, Heteroskedastic Errors")
+```
+
+## Design 9: heteroskedastic errors, single site effect
+
+
+```{r design9, fig.height = 4}
+set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
+nn <- 16
+
+tmp <- generate_simulated_data(gamma = 1, effect = "single site effect", errors = "normal", n = rep(nn, 3))
+design9_pvalues <- replicate(100, {
+  tmp$epsilon[tmp$SITEID == 1] <- rnorm(nn)
+  tmp$epsilon[tmp$SITEID == 2] <- rnorm(nn, sd = sqrt(2))
+  tmp$epsilon[tmp$SITEID == 3] <- rt(nn, df = 2)
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
+  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  generate_simulated_pvalues(tmp)
+})
+design9_pvalues <- t(design9_pvalues)
+colnames(design9_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+design9_power <- apply(design9_pvalues, 2, compute_power)
+```
+
+```{r design9_plot, fig.height = 4, fig.align="center"}
+plot_power_curves(design9_power, "Effect of 1 at a Single Site, Heteroskedastic Errors")
+
+plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 ```
