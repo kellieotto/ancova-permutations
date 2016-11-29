@@ -1,0 +1,115 @@
+\documentclass[12pt]{article}
+\usepackage[breaklinks=true]{hyperref}
+\usepackage{color}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{natbib}
+\usepackage{array}
+\usepackage{booktabs, multicol, multirow}
+\usepackage[nohead]{geometry}
+\usepackage[singlespacing]{setspace}
+
+
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{assumption}{Assumption}
+
+\newcommand{\beq}{\begin{equation}}
+\newcommand{\eeq}{\end{equation}}
+\newcommand{\bit}{\begin{itemize}}
+\newcommand{\eit}{\end{itemize}}
+
+\newcommand{\todo}[1]{{\color{red}{TO DO: \sc #1}}}
+
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\integers}{\mathbb{Z}}
+\newcommand{\naturals}{\mathbb{N}}
+\newcommand{\rationals}{\mathbb{Q}}
+
+\newcommand{\ind}{\mathbb{I}} % Indicator function
+\newcommand{\pr}{\mathbb{P}} % Generic probability
+\newcommand{\ex}{\mathbb{E}} % Generic expectation
+\newcommand{\var}{\textrm{Var}}
+\newcommand{\cov}{\textrm{Cov}}
+
+\newcommand{\normal}{N} % for normal distribution (can probably skip this)
+\newcommand{\eps}{\varepsilon}
+\newcommand\independent{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+\newcommand{\argmax}{\textrm{argmax}}
+\newcommand{\argmin}{\textrm{argmin}}
+\renewcommand{\baselinestretch}{1.5}
+
+\title{Title}
+\author{Kellie Ottoboni \\
+Department of Statistics\\
+University of California, Berkeley\\ [.2in]
+Luigi Salmaso\\
+Department of Management Engineering \\
+University degli Studi di Padova \\ [.2in]
+Fraser Lewis \\
+Reckitt Benckiser Group
+}\date{Draft \today}
+\begin{document}
+\maketitle
+
+\newpage
+
+\begin{abstract}
+In clinical trials, the standard analysis of the effectiveness of one treatment over another is a parametric analysis of variance (ANOVA), which relies on uncheckable and ostensibly implausible assumptions such as x y and z.
+The decision of the effectiveness of the treatment is based upon a single p-value from this hypothesis test, which is essentially meaningless if the assumptions are not met.
+One would like to run some sort of robustness check, an additional test or something, whose results can call into question or give evidence in favor of the results from the ANOVA.
+Permutation tests present such an opportunity: they require only minimal assumptions which are often guaranteed by the randomization that was conducted.
+In contrast to parametric tests, which rely up on stringent assumptions to obtain null distributions with a simple closed form, permutation tests use the assumption of exchangeability or randomization to construct approximate null distributions by simulation, yielding (approximately) exact tests.
+In order to mimic the ANOVA that is typically done, we compare several permutation tests based on linear models, which enable one to control for pretreatment covariates and nuisance variables.
+We present simulation results showing that the permutation methods maintain power comparable to the ANOVA under a balanced design, but the ANOVA loses power when x y and z.
+We illustrate the use of permutation tests alongside the parametric ANOVA using data from a clinical trial across seven (?) sites with different numbers of patients.
+These results provide researchers an alternative way to assess the reliability of their statistical analyses and strengthen their confidence in the conclusions.
+
+
+\end{abstract}
+
+\newpage
+
+\section{Introduction}
+\bit
+\item what's the problem with doing ANOVA? what are the assumptions and give examples of when they are commonly or clearly violated
+\item lit review: cite the vickers paper, what else have people done comparing linear models to permutation/nonparametric tests?
+\item why write this paper. what is the goal, where is the opportunity to make an advancement?
+\item overview of the paper results
+\eit
+
+
+\section{Methods}
+
+\subsection{Parametric ANOVA}
+
+\subsection{Stratified permutation test}
+
+\subsection{Permutation tests with the linear model}
+
+\section{Simulations}
+
+\bit
+\item repeated measures: don't naively control for baseline by taking diffs (cite Frison and Pocock)
+\item report relative power or relative efficiency of ANOVA against diffed perm test, LM test, and the Freedman-Lane test
+\eit
+
+
+\section{Clinical data results}
+
+\bit
+\item mention that we thought about whether to use the raw outcomes and adjust for baseline, or use outcome minus baseline. The outcome and baseline had a low correlation (include here), so we did not use their difference. As the simulations show, doing this actually reduces power
+\eit
+
+
+\section{Discussion}
+\bit
+\item This paper adds to the literature comparing parametric and nonparametric tests
+\item In randomized control trials, there is no substantial difference between parametric and nonparametric approaches.  They are asymptotically equivalent to begin with (find a citation). But our simulations, using small sample sizes, show that they give comparable results anyway.
+\item Results about differenced vs raw outcomes. This isn't new but our simulations and empirical dataset confirm it in the context of permutation tests
+\item 
+\eit
+
+
+\end{document}

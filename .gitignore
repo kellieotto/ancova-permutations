@@ -7,6 +7,9 @@
 *.out
 *.toc
 *.fmt
+*.4ct
+*.4tc
+*.xref
 
 ## Intermediate documents:
 *.dvi
@@ -55,6 +58,7 @@ acs-*.bib
 *-concordance.tex
 *.tikz
 *-tikzDictionary
+*.Rhistory
 
 # listings
 *.lol
