@@ -21,6 +21,7 @@ require(xtable)
 options(xtable.comment = FALSE, xtable.include.rownames = FALSE, xtable.align = "p{3.5cm}")
 require(grid)
 require(gridExtra)
+require(gtable)
 ```
 
 # Poisson data
@@ -388,5 +389,25 @@ plot_pvalue_hist(design5_pvalues, "Effect of 0.5 at a Single Site, Imbalanced De
 ```
 
 ```{r final_summary, fig.align = "center"}
-grid.arrange(p1, p2, p4, p5)
+#plots4 <- lapply(list(p1, p2, p4, p5), function(pl) pl + theme(legend.position = "none") + ggtitle(""))
+#do.call(grid.arrange, plots4)
+
+powers <- list(design1_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design1_power)), "Design" = rep("Balanced", nrow(design1_power))), 
+               design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Site Effect", nrow(design2_power)), "Design" = rep("Balanced", nrow(design2_power))), 
+               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design4_power)), "Design" = rep("Imbalanced", nrow(design4_power))), 
+               design5_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Site Effect", nrow(design5_power)), "Design" = rep("Imbalanced", nrow(design5_power))))
+
+all_power_curves <- do.call(rbind, powers)
+twobytwo <- melt(all_power_curves, id.vars = c("Treatment", "Design")) %>% 
+  mutate("pvalue" = rep((1: 100)/100, 5*4)) %>%
+  mutate("Method" = variable) %>%
+  ggplot(aes_string(x = "pvalue", y = "value", color = "Method")) +
+  geom_line() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  xlab("P-value") +
+  ylab("Power") +
+  facet_wrap(Treatment~Design) +
+  ggtitle("Discrete, Skewed Data")
+
+twobytwo
 ```
