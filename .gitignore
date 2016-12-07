@@ -86,5 +86,6 @@ _minted*
 
 # Untracked data files
 data/GA1102.*
-simulations/simulation_*
+simulations/*_cache
+simulations/*_files
 results/rbdata_*
