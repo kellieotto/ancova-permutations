@@ -1,5 +1,5 @@
 ---
-title: "ANOVA Comparison Simulations"
+title: "ANOVA Comparison Simulations: Gaussian Data"
 author: "Kellie Ottoboni"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -22,15 +22,16 @@ require(grid)
 require(gridExtra)
 ```
 
-# The model
+# Normal data
 
 We assume the following linear data-generating process:
 
 $$Y_{ij1} =\beta_0Y_{ij0} + \beta_{j} + \gamma_j Z_{ij} + \varepsilon_{ij}$$
 
 for individuals $i = 1, \dots, n_j$, $j = 1, \dots, J$.
-$\beta_0$ is the coefficient for the baseline measurement $Y_{i0}$, $\beta_j$ is the mean effect of being at site $j$, $Z_{ij}$ is the treatment level, $\gamma_j$ is the effect of treatment at site $j$, and $\varepsilon_{ij}$ is an error term.
+$\beta_0$ is the coefficient for the standard normally-distributed baseline measurement $Y_{i0}$, $\beta_j$ is the mean effect of being at site $j$, $Z_{ij}$ is the treatment level, $\gamma_j$ is the effect of treatment at site $j$, and $\varepsilon_{ij}$ is an error term.
 We will assume that $\beta_0 = 1$.
+The observed $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 
 Suppose there are three sites with $\beta_1 = 1, \beta_2 = 1.5,$ and $\beta_3 = 2$.
 Assume that there are 16 individuals per site and treatment assignment is balanced, i.e. 8 people receive each treatment at each site.
@@ -66,7 +67,8 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   # gamma = the magnitude of the treatment effect
   # effect = "same effect" or "single site effect" - which sites have a tr effect > 0?
   # errors = "normal" or "heavy"
-  # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), and SITEID (stratum)
+  # n = number of individuals at each site
+  # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), SITEID (stratum), site_effect (beta coefficient per individual), and epsilon (errors)
   
   SITEID <- rep(1:3, times = n)
   N <- sum(n)
