@@ -486,3 +486,29 @@ plot_power_curves(design9_power, "Effect of 1 at a Single Site, Heteroskedastic 
 
 plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 ```
+
+
+
+```{r final_summary, fig.align = "center"}
+#plots4 <- lapply(list(p1, p2, p4, p5), function(pl) pl + theme(legend.position = "none") + ggtitle(""))
+#do.call(grid.arrange, plots4)
+
+powers <- list(design1_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design1_power)), "Errors" = rep("Gaussian", nrow(design1_power))), 
+               design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Site Effect", nrow(design2_power)), "Errors" = rep("Gaussian", nrow(design2_power))), 
+               design3_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design3_power)), "Errors" = rep("Heavy-tailed", nrow(design3_power))), 
+               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Site Effect", nrow(design4_power)), "Errors" = rep("Heavy-tailed", nrow(design4_power))))
+
+all_power_curves <- do.call(rbind, powers)
+twobytwo <- melt(all_power_curves, id.vars = c("Treatment", "Errors")) %>% 
+  mutate("pvalue" = rep((1: 100)/100, 5*4)) %>%
+  mutate("Method" = variable) %>%
+  ggplot(aes_string(x = "pvalue", y = "value", color = "Method")) +
+  geom_line() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  xlab("P-value") +
+  ylab("Power") +
+  facet_wrap(Treatment~Errors) +
+  ggtitle("Gaussian Data")
+
+twobytwo
+```
