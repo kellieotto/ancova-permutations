@@ -7,7 +7,7 @@
 \usepackage{booktabs, multicol, multirow}
 \usepackage[nohead, margin=1in]{geometry}
 \usepackage[singlespacing]{setspace}
-
+\usepackage{graphicx}
 
 
 \newtheorem{theorem}{Theorem}[section]
@@ -289,7 +289,15 @@ Thus, there are four total simulation designs.
 \todo{Summary of results for normal sims}
 all 3 methods with linear model seem to be equally good. when everything is satisfied, all methods do well; 
  
-
+\begin{figure}
+\centering
+\includegraphics[width = \textwidth]{fig/normal_simulation_power}
+\caption{this stupid figure wont' show up}
+\label{annoying}
+\end{figure}
+\begin{center}
+\input{fig/normal_simulation_power_summary.tex}
+\end{center}
 
 In our second set of simulations, we assume that the baseline measurements $Y_{ij0}$ are discrete and skewed.
 This is representative of some survey data, where individuals are asked to rate their experience on a scale from 1 to 10, for instance.
@@ -313,7 +321,16 @@ The observed outcomes $\tilde{Y}_{ij1}$ that we test are also discrete.
 The assumption of normality is clearly violated here.
 
 \todo{Summary of results for skewed sims}
+\begin{figure}
+\centering
+\includegraphics[width = \textwidth]{fig/skewed_simulation_power}
+\caption{skewed data power}
+\label{annoying2}
+\end{figure}
 
+\begin{center}
+\input{fig/skewed_simulation_power_summary.tex}
+\end{center}
 
 \textbf{discussion of results}
  \bit
