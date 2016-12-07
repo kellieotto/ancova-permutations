@@ -527,3 +527,12 @@ pdf(file = "../ms/fig/normal_simulation_power.pdf", width = 8)
 twobytwo
 dev.off()
 ```
+
+
+```{r power_summary_tab, results = "asis"}
+summary05 <- t(sapply(powers, function(x) x[5, c(6, 7, 1:5)]))
+summarytab <- xtable(summary05, align = "rp{1.25in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
+       caption = "Empirical power at level $0.05$ for Gaussian simulated data")
+print(summarytab, type="latex", file="../ms/fig/normal_simulation_power_summary.tex")
+summarytab
+```
