@@ -489,7 +489,7 @@ plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 
 
 
-```{r final_summary, fig.align = "center"}
+```{r final_summary, fig.align = "center", fig.width = 12}
 #plots4 <- lapply(list(p1, p2, p4, p5), function(pl) pl + theme(legend.position = "none") + ggtitle(""))
 #do.call(grid.arrange, plots4)
 
@@ -508,7 +508,22 @@ twobytwo <- melt(all_power_curves, id.vars = c("Treatment", "Errors")) %>%
   xlab("P-value") +
   ylab("Power") +
   facet_wrap(Treatment~Errors) +
-  ggtitle("Gaussian Data")
+  ggtitle("Gaussian Data") +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 12),
+    strip.text.x = element_text(size = 12),
+    legend.position = "bottom"
+  ) + 
+  guides(color=guide_legend(nrow=2,byrow=TRUE))
 
 twobytwo
+
+pdf(file = "../ms/fig/normal_simulation_power.pdf", width = 8)
+twobytwo
+dev.off()
 ```

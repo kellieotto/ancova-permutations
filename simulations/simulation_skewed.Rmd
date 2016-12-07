@@ -407,7 +407,22 @@ twobytwo <- melt(all_power_curves, id.vars = c("Treatment", "Design")) %>%
   xlab("P-value") +
   ylab("Power") +
   facet_wrap(Treatment~Design) +
-  ggtitle("Discrete, Skewed Data")
+  ggtitle("Discrete, Skewed Data") +
+    theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 12),
+    strip.text.x = element_text(size = 12),
+    legend.position = "bottom"
+  ) + 
+  guides(color=guide_legend(nrow=2,byrow=TRUE))
 
 twobytwo
+
+pdf(file = "../ms/fig/skewed_simulation_power.pdf", width = 8)
+twobytwo
+dev.off()
 ```
