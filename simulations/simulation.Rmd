@@ -29,17 +29,17 @@ We assume the following linear data-generating process:
 $$Y_{ij1} =\beta_0Y_{ij0} + \beta_{j} + \gamma_j Z_{ij} + \varepsilon_{ij}$$
 
 for individuals $i = 1, \dots, n_j$, $j = 1, \dots, J$.
-$\beta_0$ is the coefficient for the standard normally-distributed baseline measurement $Y_{i0}$, $\beta_j$ is the mean effect of being at site $j$, $Z_{ij}$ is the treatment level, $\gamma_j$ is the effect of treatment at site $j$, and $\varepsilon_{ij}$ is an error term.
+$\beta_0$ is the coefficient for the standard normally-distributed baseline measurement $Y_{i0}$, $\beta_j$ is the mean effect of being in stratum $j$, $Z_{ij}$ is the treatment level, $\gamma_j$ is the effect of treatment in stratum $j$, and $\varepsilon_{ij}$ is an error term.
 We will assume that $\beta_0 = 1$.
 The observed $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 
-Suppose there are three sites with $\beta_1 = 1, \beta_2 = 1.5,$ and $\beta_3 = 2$.
-Assume that there are 16 individuals per site and treatment assignment is balanced, i.e. 8 people receive each treatment at each site.
+Suppose there are three strata with $\beta_1 = 1, \beta_2 = 1.5,$ and $\beta_3 = 2$.
+Assume that there are 16 individuals per stratum and treatment assignment is balanced, i.e. 8 people receive each treatment at each stratum.
 
 We use two designs:
 
 * Design 1: $\gamma_1 = \gamma_2 = \gamma_3 = 1$. This is the standard assumption of a constant, additive treatment effect.
-* Design 2: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect at site 1, but no treatment effect at sites 2 and 3. This is a simplistic case of heterogeneous treatment effects.
+* Design 2: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in stratums 2 and 3. This is a simplistic case of heterogeneous treatment effects.
 
 With these two designs, we vary the distribution of $\varepsilon$.
 In the first case, we use $\varepsilon \sim N(0, 1)$ to mimic the usual ANOVA assumptions.
@@ -48,13 +48,13 @@ Thus, there are four total simulation designs.
 
 We compare five tests:
 
-* ANOVA: we fit a linear model of response $Y_1$ on baseline $Y_0$, treatment $Z$, and a dummy for site.
-* Stratified permutation: we permute treatment assignment within site, then take the difference in means between treated and control outcomes $Y_1$
+* ANOVA: we fit a linear model of response $Y_1$ on baseline $Y_0$, treatment $Z$, and a dummy for stratum.
+* Stratified permutation: we permute treatment assignment within stratum, then take the difference in means between treated and control outcomes $Y_1$
 * Differenced permutation: we do the same permutation procedure as the stratified permutation test, except we use the difference between outcome and baseline, $Y_1 - Y_0$
-* Linear model (LM) permutation: we use the same stratified permutation procedure as above, except use the $t$-statistic for the coefficient on treatment in the linear regression of $Y_1$ on $Y_0$, $Z$, and site dummies
+* Linear model (LM) permutation: we use the same stratified permutation procedure as above, except use the $t$-statistic for the coefficient on treatment in the linear regression of $Y_1$ on $Y_0$, $Z$, and stratum dummies
 * Freedman-Lane test: see the other Rmd document for a full description of this procedure
 
-Throughout our simulations, we first fix $Y_0$ and site ID.
+Throughout our simulations, we first fix $Y_0$ and stratum ID.
 Treatment $Z$ and the errors $\varepsilon$ are randomly drawn according to their respective distributions.
 Then, $Y_1$ is constructed using the linear data-generating process above.
 We regenerate $Z$, $\varepsilon$, and $Y_1$ 100 times for each design, then compute the empirical power of the five tests.
@@ -65,12 +65,12 @@ We regenerate $Z$, $\varepsilon$, and $Y_1$ 100 times for each design, then comp
 generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   # Input:
   # gamma = the magnitude of the treatment effect
-  # effect = "same effect" or "single site effect" - which sites have a tr effect > 0?
+  # effect = "same effect" or "single stratum effect" - which strata have a tr effect > 0?
   # errors = "normal" or "heavy"
-  # n = number of individuals at each site
-  # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), SITEID (stratum), site_effect (beta coefficient per individual), and epsilon (errors)
+  # n = number of individuals at each stratum
+  # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), stratumID (stratum), stratum_effect (beta coefficient per individual), and epsilon (errors)
   
-  SITEID <- rep(1:3, times = n)
+  stratumID <- rep(1:3, times = n)
   N <- sum(n)
   beta <- c(1, 1.5, 2)
   
@@ -91,14 +91,14 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   # Generate covariates
   Y0 <- rnorm(N)
   Z <- rep(0:1, length.out = N)
-  site_effect <- rep(beta, times = n)
-  Y1 <- Y0 + gamma_vec*Z + site_effect + epsilon
-  return(data.frame(Y1, Y0, Z, gamma_vec, SITEID, site_effect, epsilon))
+  stratum_effect <- rep(beta, times = n)
+  Y1 <- Y0 + gamma_vec*Z + stratum_effect + epsilon
+  return(data.frame(Y1, Y0, Z, gamma_vec, stratumID, stratum_effect, epsilon))
 }
 
 generate_simulated_pvalues <- function(dataset, reps = 1e3){
   # Inputs:
-  # dataset = a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), and SITEID (stratum)
+  # dataset = a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), and stratumID (stratum)
   # Returns: a vector of p-values
   # first element is the p-value from the ANOVA
   # second element is the p-value from the stratified two-sample permutation test
@@ -106,38 +106,38 @@ generate_simulated_pvalues <- function(dataset, reps = 1e3){
   # fourth element is the p-value from the Freedman-Lane linear model test, permuting residuals
   
   # ANOVA
-  modelfit <- lm(Y1 ~ Y0 + Z + factor(SITEID), data = dataset)
+  modelfit <- lm(Y1 ~ Y0 + Z + factor(stratumID), data = dataset)
   resanova <- summary(aov(modelfit))
   anova_pvalue <- resanova[[1]]["Z", "Pr(>F)"]
   
   # Stratified permutation test of Y1
   observed_diff_means <- mean(dataset$Y1[dataset$Z == 1]) - mean(dataset$Y1[dataset$Z == 0])
-  diff_means_distr <- stratified_two_sample(group = dataset$Z, response = dataset$Y1, stratum = dataset$SITEID, reps = reps)
+  diff_means_distr <- stratified_two_sample(group = dataset$Z, response = dataset$Y1, stratum = dataset$stratumID, reps = reps)
   perm_pvalue <- t2p(observed_diff_means, diff_means_distr, alternative = "two-sided")
   
   # Diffed permutation test of Y1-Y0
   dataset$diff <- dataset$Y1 - dataset$Y0
   observed_diff_means2 <- mean(dataset$diff[dataset$Z == 1]) - mean(dataset$diff[dataset$Z == 0])
-  diff_means_distr2 <- stratified_two_sample(group = dataset$Z, response = dataset$diff, stratum = dataset$SITEID, reps = reps)
+  diff_means_distr2 <- stratified_two_sample(group = dataset$Z, response = dataset$diff, stratum = dataset$stratumID, reps = reps)
   perm_pvalue2 <- t2p(observed_diff_means2, diff_means_distr2, alternative = "two-sided")
     
   # Permutation of treatment in linear model
   observed_t1 <- summary(modelfit)[["coefficients"]]["Z", "t value"]
   lm1_t_distr <-  replicate(reps, {
-    dataset$Z_perm <- permute_within_groups(dataset$Z, dataset$SITEID)
-    lm1_perm <- lm(Y1 ~ Y0 + Z_perm + factor(SITEID), data = dataset)
+    dataset$Z_perm <- permute_within_groups(dataset$Z, dataset$stratumID)
+    lm1_perm <- lm(Y1 ~ Y0 + Z_perm + factor(stratumID), data = dataset)
     summary(lm1_perm)[["coefficients"]]["Z_perm", "t value"]
   })
   lm_pvalue <- t2p(observed_t1, lm1_t_distr, alternative = "two-sided")
 
   # Freedman-Lane linear model residual permutation
-  lm2_no_tr <- lm(Y1~Y0 + factor(SITEID), data = dataset)
+  lm2_no_tr <- lm(Y1~Y0 + factor(stratumID), data = dataset)
   lm2_resid <- residuals(lm2_no_tr)
   lm2_yhat <- fitted(lm2_no_tr)
   lm2_t_distr <-  replicate(reps, {
-    lm2_resid_perm <- permute_within_groups(lm2_resid, dataset$SITEID)
+    lm2_resid_perm <- permute_within_groups(lm2_resid, dataset$stratumID)
     dataset$response_fl <-  lm2_yhat + lm2_resid_perm
-    lm2_perm <- lm(response_fl ~ Y0 + Z + factor(SITEID), data = dataset)
+    lm2_perm <- lm(response_fl ~ Y0 + Z + factor(stratumID), data = dataset)
     summary(lm2_perm)[["coefficients"]]["Z", "t value"]
   })
   fl_pvalue <- t2p(observed_t1, lm2_t_distr, alternative = "two-sided")
@@ -192,7 +192,7 @@ plot_pvalue_scatter <- function(pvalue_mat, title){
 ## Test level: simulation under the null
 
 Before testing for different kinds of effects, we begin checking that the tests have the correct level.
-We follow the procedure described above, using an effect size of $\gamma = 0$ at all sites and using standard normal errors.
+We follow the procedure described above, using an effect size of $\gamma = 0$ at all strata and using standard normal errors.
 To have the correct level means that the test rate of rejection at level $\alpha$ is $\alpha 100\%$.
 In other words, the p-values are uniformly distributed and the power curve should coincide with the line with slope $1$ through the origin.
 Figure \ref{fig:design_null_plots} demonstrates that this is the case.
@@ -204,8 +204,8 @@ set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 U
 tmp <- generate_simulated_data(gamma = 0, effect = "same effect", errors = "normal")
 design0_pvalues <- replicate(100, {
   tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design0_pvalues <- t(design0_pvalues)
@@ -229,10 +229,10 @@ Without controlling for the baseline values, the variance in $Y_1$ masks the tre
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
 tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal")
-design1_pvalues <- replicate(100, {
+design1_pvalues <- replicate(1000, {
   tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 
@@ -247,20 +247,20 @@ plot_power_curves(design1_power, "Constant Additive Effect of 1, Normal Errors")
 plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 1, Normal Errors")
 ```
 
-## Design 2: Single site effect, normal errors
+## Design 2: Single stratum effect, normal errors
 
 A similar pattern emerges: the simple stratified permutation test has low power, while the other four power curves roughly coincide.
 The Freedman-Lane test may have the highest power for small p-values, but this could also just be noise.
-All five power curves are closer to the line passing through the origin: since the effect is only present at one site, it is more difficult to detect.
+All five power curves are closer to the line passing through the origin: since the effect is only present at one stratum, it is more difficult to detect.
 
 ```{r design2, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 1, effect = "single site effect", errors = "normal")
-design2_pvalues <- replicate(100, {
+tmp <- generate_simulated_data(gamma = 1, effect = "single stratum effect", errors = "normal")
+design2_pvalues <- replicate(1000, {
   tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design2_pvalues <- t(design2_pvalues)
@@ -269,7 +269,7 @@ design2_power <- apply(design2_pvalues, 2, compute_power)
 ```
 
 ```{r design2_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design2_power, "Effect of 1 at a Single Site, Normal Errors")
+plot_power_curves(design2_power, "Effect of 1 at a Single stratum, Normal Errors")
 
 plot_pvalue_hist(design2_pvalues, "Effect of 1, Normal Errors")
 ```
@@ -284,10 +284,10 @@ Controlling for baseline $Y_0$ does not substantially help reduce variance.
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
 tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "heavy")
-design3_pvalues <- replicate(100, {
+design3_pvalues <- replicate(1000, {
   tmp$epsilon <- rt(nrow(tmp), df = 2)
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design3_pvalues <- t(design3_pvalues)
@@ -301,7 +301,7 @@ plot_power_curves(design3_power, "Constant Additive Effect of 1, Heavy-tailed Er
 plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 1, Heavy-tailed Errors")
 ```
 
-## Design 4: single site effect, heavy-tailed errors
+## Design 4: single stratum effect, heavy-tailed errors
 
 The noise from the heavy-tailed errors masks the treatment effect so much that controlling for baseline measures makes no difference.
 There is almost no power to detect an effect using any of the five tests.
@@ -309,11 +309,11 @@ There is almost no power to detect an effect using any of the five tests.
 ```{r design4, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 1, effect = "single site effect", errors = "heavy")
-design4_pvalues <- replicate(100, {
+tmp <- generate_simulated_data(gamma = 1, effect = "single stratum effect", errors = "heavy")
+design4_pvalues <- replicate(1000, {
   tmp$epsilon <- rt(nrow(tmp), df = 2)
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design4_pvalues <- t(design4_pvalues)
@@ -322,7 +322,7 @@ design4_power <- apply(design4_pvalues, 2, compute_power)
 ```
 
 ```{r design4_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design4_power, "Effect of 1 at a Single Site, Heavy-tailed Errors")
+plot_power_curves(design4_power, "Effect of 1 at a Single stratum, Heavy-tailed Errors")
 
 plot_pvalue_hist(design4_pvalues, "Effect of 1, Heavy-tailed Errors")
 ```
@@ -347,8 +347,8 @@ set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 U
 tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal")
 design5_pvalues <- replicate(100, {
   tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- 0.25*tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- 0.25*tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 
@@ -366,10 +366,10 @@ plot_pvalue_hist(design5_pvalues, "Constant Additive Effect of 1, Normal Errors 
 
 # Imbalanced designs
 
-Suppose that instead of having 16 individuals per site, we distribute them unequally across sites:
-site 1 has 8 patients, site 2 has 16 patients, and site 3 has 24 patients.
+Suppose that instead of having 16 individuals per stratum, we distribute them unequally across strata:
+stratum 1 has 8 patients, stratum 2 has 16 patients, and stratum 3 has 24 patients.
 This imbalance does not violate any assumptions of the ANOVA.
-However, it may reduce power if the effect is concentrated in sites with fewer patients.
+However, it may reduce power if the effect is concentrated in strata with fewer patients.
 
 ## Design 6: Constant additive effect, normal errors
 
@@ -382,8 +382,8 @@ set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 U
 tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal", n = c(8, 16, 24))
 design6_pvalues <- replicate(100, {
   tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 
@@ -398,19 +398,19 @@ plot_power_curves(design6_power, "Constant Additive Effect of 1, Normal Errors")
 plot_pvalue_hist(design6_pvalues, "Constant Additive Effect of 1, Normal Errors")
 ```
 
-## Design 7: Single site effect, normal errors
+## Design 7: Single stratum effect, normal errors
 
-There is very low power to detect the effect here, since in the simulated data, the site with only 8 patients was the only site with a nonzero effect of treatment.
+There is very low power to detect the effect here, since in the simulated data, the stratum with only 8 patients was the only stratum with a nonzero effect of treatment.
 The treatment effect is on the same order of magnitude as the error variance.
 
 ```{r design7, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 1, effect = "single site effect", errors = "normal", n = c(8, 16, 24))
+tmp <- generate_simulated_data(gamma = 1, effect = "single stratum effect", errors = "normal", n = c(8, 16, 24))
 design7_pvalues <- replicate(100, {
   tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design7_pvalues <- t(design7_pvalues)
@@ -419,7 +419,7 @@ design7_power <- apply(design7_pvalues, 2, compute_power)
 ```
 
 ```{r design7_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design7_power, "Effect of 1 at a Single Site, Normal Errors")
+plot_power_curves(design7_power, "Effect of 1 at a Single stratum, Normal Errors")
 
 plot_pvalue_hist(design7_pvalues, "Effect of 1, Normal Errors")
 ```
@@ -428,10 +428,10 @@ plot_pvalue_hist(design7_pvalues, "Effect of 1, Normal Errors")
 
 One assumption of ANOVA is that errors are homoskedastic: they have the same variance across groups.
 Suppose that this does not hold in our data.
-Imagine we have three sites with 16 patients each, but they have different error distributions:
-site 1 has standard normal errors,
-site 2 has normally distributed errors with mean 0 and variance 2,
-and site 3 has errors with a $t$-distribution on 2 degrees of freedom.
+Imagine we have three strata with 16 patients each, but they have different error distributions:
+stratum 1 has standard normal errors,
+stratum 2 has normally distributed errors with mean 0 and variance 2,
+and stratum 3 has errors with a $t$-distribution on 2 degrees of freedom.
 
 ## Design 8: heteroskedastic errors, constant treatment effect
 
@@ -441,11 +441,11 @@ nn <- 16
 
 tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal", n = rep(nn, 3))
 design8_pvalues <- replicate(100, {
-  tmp$epsilon[tmp$SITEID == 1] <- rnorm(nn)
-  tmp$epsilon[tmp$SITEID == 2] <- rnorm(nn, sd = sqrt(2))
-  tmp$epsilon[tmp$SITEID == 3] <- rt(nn, df = 2)
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$epsilon[tmp$stratumID == 1] <- rnorm(nn)
+  tmp$epsilon[tmp$stratumID == 2] <- rnorm(nn, sd = sqrt(2))
+  tmp$epsilon[tmp$stratumID == 3] <- rt(nn, df = 2)
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 
@@ -460,20 +460,20 @@ plot_power_curves(design8_power, "Constant Additive Effect of 1, Heteroskedastic
 plot_pvalue_hist(design8_pvalues, "Constant Additive Effect of 1, Heteroskedastic Errors")
 ```
 
-## Design 9: heteroskedastic errors, single site effect
+## Design 9: heteroskedastic errors, single stratum effect
 
 
 ```{r design9, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 nn <- 16
 
-tmp <- generate_simulated_data(gamma = 1, effect = "single site effect", errors = "normal", n = rep(nn, 3))
+tmp <- generate_simulated_data(gamma = 1, effect = "single stratum effect", errors = "normal", n = rep(nn, 3))
 design9_pvalues <- replicate(100, {
-  tmp$epsilon[tmp$SITEID == 1] <- rnorm(nn)
-  tmp$epsilon[tmp$SITEID == 2] <- rnorm(nn, sd = sqrt(2))
-  tmp$epsilon[tmp$SITEID == 3] <- rt(nn, df = 2)
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$SITEID)
-  tmp$Y1 <- tmp$Y0 + tmp$site_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
+  tmp$epsilon[tmp$stratumID == 1] <- rnorm(nn)
+  tmp$epsilon[tmp$stratumID == 2] <- rnorm(nn, sd = sqrt(2))
+  tmp$epsilon[tmp$stratumID == 3] <- rt(nn, df = 2)
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design9_pvalues <- t(design9_pvalues)
@@ -482,7 +482,7 @@ design9_power <- apply(design9_pvalues, 2, compute_power)
 ```
 
 ```{r design9_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design9_power, "Effect of 1 at a Single Site, Heteroskedastic Errors")
+plot_power_curves(design9_power, "Effect of 1 at a Single stratum, Heteroskedastic Errors")
 
 plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 ```
@@ -494,9 +494,9 @@ plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 #do.call(grid.arrange, plots4)
 
 powers <- list(design1_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design1_power)), "Errors" = rep("Gaussian", nrow(design1_power))), 
-               design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Site Effect", nrow(design2_power)), "Errors" = rep("Gaussian", nrow(design2_power))), 
+               design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design2_power)), "Errors" = rep("Gaussian", nrow(design2_power))), 
                design3_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design3_power)), "Errors" = rep("Heavy-tailed", nrow(design3_power))), 
-               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Site Effect", nrow(design4_power)), "Errors" = rep("Heavy-tailed", nrow(design4_power))))
+               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design4_power)), "Errors" = rep("Heavy-tailed", nrow(design4_power))))
 
 all_power_curves <- do.call(rbind, powers)
 twobytwo <- melt(all_power_curves, id.vars = c("Treatment", "Errors")) %>% 
@@ -531,8 +531,9 @@ dev.off()
 
 ```{r power_summary_tab, results = "asis"}
 summary05 <- t(sapply(powers, function(x) x[5, c(6, 7, 1:5)]))
-summarytab <- xtable(summary05, align = "rp{1.25in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
-       caption = "Empirical power at level $0.05$ for Gaussian simulated data")
+summarytab <- xtable(summary05, align = "rp{1.15in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
+       caption = "Empirical power at level $0.05$ for Gaussian simulated data",
+       label = "tab:normal_power") 
 print(summarytab, type="latex", file="../ms/fig/normal_simulation_power_summary.tex")
 summarytab
 ```
