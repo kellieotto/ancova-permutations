@@ -286,14 +286,20 @@ In the first case, we use $\varepsilon \sim N(0, 1)$ to fit with the parametric 
 In the second case, $\varepsilon$ comes from a $t$ distribution with 2 degrees of freedom so the errors are heavy-tailed.
 Thus, there are four total simulation designs.
 
-\todo{Summary of results for normal sims}
-all 3 methods with linear model seem to be equally good. when everything is satisfied, all methods do well; 
- 
+Figure~\ref{fig:normal_sim_power} shows the estimated power curves in these four designs using a treatment effect of $\gamma = 1$.
+The best case is when the errors are Gaussian and the treatment effect is constant across strata, while the worst case is when the errors are heavy-tailed and the treatment effect only appears in one stratum.
+\todo{it makes sense that this happens as assumptions are broken in other cases}
+A consistent pattern appears in each case: the stratified permutation test has the lowest power, while the other four tests tend to have very similar power.
+Table~\ref{tab:normal_power} displays the value of these power curves at level $0.05$.
+These numbers show that actually, for $\alpha=0.05$, the discrepancy between the stratified permutation test and the others is not so large when the effect is isolated in a single stratum.
+In this case, the permutation test may have more power than the parametric ANOVA at significance levels that are used in practice.
+
+
 \begin{figure}
 \centering
 \includegraphics[width = \textwidth]{fig/normal_simulation_power}
-\caption{this stupid figure wont' show up}
-\label{annoying}
+\caption{Empirical power curves for the Gaussian simulated data}
+\label{fig:normal_sim_power}
 \end{figure}
 \begin{center}
 \input{fig/normal_simulation_power_summary.tex}
@@ -320,23 +326,39 @@ However we don't observe $Y_{ij1}$ but instead $\tilde{Y}_{ij1}$, which is defin
 The observed outcomes $\tilde{Y}_{ij1}$ that we test are also discrete.
 The assumption of normality is clearly violated here.
 
-\todo{Summary of results for skewed sims}
+In these simulations, we examine the effect of sample size.
+First, we consider balanced samples, where each stratum contains 16 individuals, 8 of whom receive one treatment and the other 8 of whom receive the other.
+Next, we consider imbalanced samples, where the smallest stratum has only 8 individuals, the next has 16, and the largest has 24.
+We again consider the four combinations of treatment effects and sample sizes.
+In the case where there is only a non-null treatment effect in one stratum and sample sizes are different, this effect occurs in the smallest stratum.
+
+Figure~\ref{fig:skewed_sim_power} shows the estimated power curves in these four designs using a treatment effect of $\gamma = 0.5$.
+When the treatment effect is constant, sample sizes within each stratum don't matter; the power curves look the same up to chance variation.
+When the treatment effect only occurs in one stratum, there is a substantial loss in power due to halving the number of individuals in the stratum where the effect is present.
+In practice, one does not usually know a priori which individuals will be affected by treatment (otherwise, those unaffected by treatment would be excluded from the study altogether),
+so this result suggests using caution when stratifying.
+As in the first set of simulations, the stratified permutation test using the raw outcomes has the lowest power of the five tests.
+Now, however, the stratified permutation test using the difference between outcome and baseline also has lower power than the three using linear models.
+Presumably, this is because the differences are also discrete and lie in a small range of values, so the test statistic does not vary greatly across permutations.
+Table~\ref{tab:skewed_power} confirms this: power for the three linear model methods is high when the treatment is constant across strata, and power for all of the methods suffers when the effect is isolated in a single stratum.
+
+
 \begin{figure}
 \centering
 \includegraphics[width = \textwidth]{fig/skewed_simulation_power}
-\caption{skewed data power}
-\label{annoying2}
+\caption{Empirical power curves for the skewed, discrete simulated data}
+\label{fig:skewed_sim_power}
 \end{figure}
 
 \begin{center}
 \input{fig/skewed_simulation_power_summary.tex}
 \end{center}
 
-\textbf{discussion of results}
- \bit
-\item repeated measures: don't naively control for baseline by taking diffs (\cite{frison_repeated_1992})
-\item report relative power or relative efficiency of ANOVA against diffed perm test, LM test, and the Freedman-Lane test
-\eit
+It makes sense that in all of these simulations, the permutation test using the difference in outcome and baseline as the response measure is more powerful than the permutation test using the raw outcomes.
+In additional simulations\footnote{see supplementary files on GitHub}, we changed the Gaussian model so that the outcome and baseline had correlation of $0.25$.
+In this case, the result was reversed: the differenced test had low power while the test using the raw outcomes had a power curve closer to the tests that adjust for covariates using a linear model.
+This phenomenon has been studied before \todo{cite}, and it is recommended to use the difference in outcome and baseline only when their correlation is larger than $0.5$ (\cite{frison_repeated_1992}).
+
 
 
 \subsection{Clinical data results}
@@ -377,6 +399,10 @@ Not applicable
 \textbf{Authors' contributions}
 \textbf{Acknowledgements}
 \textbf{Authors' information}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
 
 
 
