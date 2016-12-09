@@ -88,4 +88,5 @@ _minted*
 data/GA1102.*
 simulations/*_cache
 simulations/*_files
-results/rbdata_*
+results/rbdata*
+results/results_*
