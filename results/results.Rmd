@@ -499,10 +499,13 @@ for(col in continuous_vars){
 rownames(pvalues_table_contin) <- continuous_vars
 colnames(pvalues_table_contin) <- tests
 
-print(xtable(pvalues_table_contin, 
+
+summarytab <- xtable(pvalues_table_contin, 
              digits = 3,
-             align = paste0(c("r|", rep("p{1in}", ncol(pvalues_table_contin))), 
+             align = paste0(c("r|", rep("p{1.2in}", ncol(pvalues_table_contin))), 
                             collapse = ""),
-             caption = "Comparison of p-values from four tests, for each continuous endpoint."),
-      include.rownames = TRUE)
+             caption = "Comparison of p-values from four tests, for each continuous endpoint.")
+print(summarytab, include.rownames = TRUE)
+
+print(summarytab, include.rownames = TRUE, type="latex", file="../ms/fig/results_pvalue_summary.tex") 
 ```
