@@ -42,13 +42,13 @@
 
 \title{A Comparison of Parametric and Permutation Tests for Regression Analysis of Randomized Control Trials}
 \author{Kellie Ottoboni \\
-Department of Statistics\\
+Department of Statistics; Berkeley Institute for Data Science\\
 University of California, Berkeley\\ [.2in]
 Luigi Salmaso\\
-Department of Management Engineering \\
-University degli Studi di Padova \\ [.2in]
+Department of Management and Engineering \\
+University of Padova \\ [.2in]
 Fraser Lewis \\
-Reckitt Benckiser Group
+RB
 }\date{Draft \today}
 \begin{document}
 \maketitle
@@ -57,21 +57,21 @@ Reckitt Benckiser Group
 
 \begin{abstract}
 \noindent\textbf{Background:}
-In clinical trials, the standard analysis of the effectiveness of one treatment over another is a parametric analysis of variance (ANOVA), which relies on uncheckable and ostensibly implausible assumptions such as x y and z.
-The decision of the effectiveness of the treatment is based upon a single p-value from this hypothesis test, which is essentially meaningless if the assumptions are not met.
-One would like to run some sort of robustness check, an additional test or something, whose results can call into question or give evidence in favor of the results from the ANOVA.
+In clinical trials, the standard analysis of the effectiveness of one treatment over another is a parametric analysis of covariance (ANCOVA), a method based on linear regression which relies on uncheckable and ostensibly implausible assumptions such as constant treatment effects across groups, normality of errors, and homoskedasticity.
+The decision of the effectiveness of the treatment is based upon a single p-value from this hypothesis test, which may not be valid if the assumptions are not met.
+One would like to run some sort of robustness check, an additional test or something, whose results can call into question or give evidence in favor of the results from the ANCOVA.
 
 \noindent\textbf{Methods:}
 Permutation tests present such an opportunity: they require only minimal assumptions which are often guaranteed by the randomization that was conducted.
 In contrast to parametric tests, which rely up on stringent assumptions to obtain null distributions with a simple closed form, permutation tests use the assumption of exchangeability or randomization to construct approximate null distributions by simulation, yielding (approximately) exact tests.
-In order to mimic the ANOVA that is typically done, we compare several permutation tests based on linear models, which enable one to control for pretreatment covariates and nuisance variables.
+In order to mimic the ANCOVA that is typically done, we compare several permutation tests based on linear models, which enable one to control for pretreatment covariates and nuisance variables.
 
 \noindent\textbf{Results:}
-We present simulation results showing that the permutation methods maintain power comparable to the ANOVA under a balanced design, but the ANOVA loses power when x y and z.
-We illustrate the use of permutation tests alongside the parametric ANOVA using data from a clinical trial across seven (?) sites with different numbers of patients.
+We present simulations showing that the permutation methods maintain power comparable to the ANCOVA in randomized trials.
+We illustrate the use of permutation tests alongside the parametric ANCOVA using data from a clinical trial across eight sites with different numbers of patients.
 
 \noindent\textbf{Conclusions:}
-These results provide researchers an alternative way to assess the reliability of their statistical analyses and strengthen their confidence in the conclusions.
+These results suggest that the parametric ANCOVA and linear model permutation tests perform similarly, even when the more stringent assumptions for the parametric test are not met.
 
 
 \end{abstract}
@@ -81,14 +81,69 @@ These results provide researchers an alternative way to assess the reliability o
 
 \section{Background}
 % The Background section should explain the background to the study, its aims, a summary of the existing literature and why this study was necessary or its contribution to the field.
+A hypothesis test is a statistical method for determining whether observed data is consistent with a hypothesis about the process that generated the data.
+Medical trials use hypothesis testing to assess the evidence that a treatment has an effect on one or more clinically relevant outcomes.
+The simplest version of this experiment, which involves randomly assigning treatment to a fixed number of individuals in a group and measuring a single outcome, has been studied for nearly a century (see \citet{fisher_design_1935} and \citet{neyman_application_1923} for early references).
+One can conduct hypothesis tests and construct confidence intervals for the estimated treatment effect
+by exploiting the fact that the difference in average outcomes between the treatment and control groups is asymptotically normal with a variance that can be estimated from the data.
 
-\bit
-\item what's the problem with doing ANOVA? what are the assumptions and give examples of when they are commonly or clearly violated
-\item lit review: cite the vickers paper, what else have people done comparing linear models to permutation/nonparametric tests?
-\item why write this paper. what is the goal, where is the opportunity to make an advancement?
-\item overview of the paper results
+Randomized experiments in the real world are rarely this simple:
+individuals are heterogeneous with respect to pretreatment covariates,
+they may not take the treatment they are assigned or may drop out of the study,
+and an individual's assignment to treatment may affect others' outcomes.
+Techniques have been developed to deal with each of these issues.
+In this paper, we focus on the first.
+
+Random assignment of treatment ensures that on average, across all possible randomizations, pretreatment covariates are balanced between treatment groups.
+However, in any particular randomization that is realized, there may be imbalances.
+If these covariates are predictive of the outcome, then even when there is no effect of treatment, differences in outcomes between treatment groups may appear.
+Controlling for such baseline covariates can reduce the variability of estimated treatment effects and yield more powerful hypothesis tests.
+
+Another method for controlling for baseline covariates is stratification:
+individuals are divided into groups based on levels of some covariate.
+A common stratification variable in clinical experiments is location:
+individuals often come from many sites because it is difficult to recruit a sufficient number of participants at one doctor's office or hospital.
+Treatments are randomly assigned  \textit{within strata} to guarantee that the stratum variable is balanced between treatment groups.
+As with other pretreatment covariates, outcomes may vary across strata due to factors unrelated to individuals.
+Controlling for stratum can have the same beneficial effects as controlling for other pretreatment covariates.
+
+\todo{not happy with this paragraph}
+The most common way to control for covariates is linear regression.
+The premise is to project the outcomes onto a linear plane which describes the contribution of each covariate to determining the outcome.
+The coefficient of any particular variable answers the question, if we were to hold fixed all other covariates and increase this variable by one unit, how much would the outcome change?
+This model posits a linear relationship between covariates, treatment, and outcome; if the true relationship is not linear, then it is unclear what such a regression is estimating.
+However, if one knows all covariates related to the outcome and fits a fully saturated linear model (including all covariates and their interactions), the coefficient for the treatment is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
+When controlling for strata, such as location, it is standard to use analysis of covariance (ANCOVA), a particular case of linear regression which allows each stratum to have its own mean outcome level.
+This amounts to choosing the plane of best fit for the data, allowing each stratum to have a different intercept but enforcing that the slope is the same for each.
+
+Hypothesis testing of estimated coefficients requires even stronger assumptions than linearity, such as normally distributed and homoskedastic errors.
+When this holds, the distribution of a coefficient scaled by its estimated variance, has a $t$-distribution.
+Thus, a hypothesis test for a treatment effect amounts to a hypothesis test of the coefficient for treatment in the linear model, and can be evaluated analytically and quickly.
+However, these assumptions are clearly violated in many cases:
+when the data are discrete or ordinal, when the treatment has a differential effect across strata, and when measurement error sizes differ across strata.
+
+An alternative approach is permutation testing.
+Deliberate randomization induces a distribution for any test statistic under the null hypothesis that treatment has no effect on the outcome,
+because the randomization scheme provides information about all possible ways that treatment may have been assigned 
+and the null hypothesis tells us what each individual's response would be regardless of the assignment (namely, it would be the same).
+Instead of deciding how ``extreme'' the observed test statistic is relative to a parametric reference distribution, such as Student's $t$ or the Gaussian, one judges it against this randomization distribution.
+Such a test is exact, meaning that it controls the type I error rate at the pre-specified level, even in finite samples, whereas parametric hypothesis tests based on asymptotic approximations do not always guarantee good finite sample properties.
+In the past, parametric tests were necessary because asymptotic approximations were the only computationally feasible way to estimate distributions. 
+Now, computational power is no longer a barrier to finding exact (or exact to pre-specified precision) randomization distributions.
+In most cases, a randomization test is preferable to a parametric one:
+``[a] corresponding parametric test is valid only to the extent that it results in the same statistical decision [as the randomization test]'' (\cite{bradley_distribution_1968}).
+
+\todo{ lit review: 
+\bit 
+\item cite the vickers paper
+\item what else have people done comparing linear models to permutation/nonparametric tests?
 \eit
+}
 
+In this paper, we review ANCOVA and its permutation counterparts, comparing their performance in different scenarios, and illustrating their application with a clinical dataset.
+We find in simulations that even when assumptions are not satisfied, the parametric and permutation tests have comparable power to detect a treatment effect.
+We apply each of the methods to data from a clinical trial seeking to compare the performance of two treatments for gastroesophageal reflux disease (GERD).
+We conclude by discussing implications of these results for practitioners.
 
 \section{Methods}
 % The methods section should include:
@@ -121,7 +176,7 @@ A typical problem is to estimate one of these averages.
 Instead, we will focus on hypothesis testing.
 Below, we outline a few approaches to studying the average treatment effect, explain the assumptions that are necessary, and 
 
-\subsection{Parametric ANOVA}
+\subsection{Parametric ANCOVA}
 
 The model is
 
@@ -134,25 +189,36 @@ The parameter of interest is $\gamma$, which represents the average treatment ef
 We would like to test the null hypothesis $H_0: \gamma = 0$ against
 the two-sided alternative hypothesis $H_1: \gamma \neq 0$.
 
-In the normal theory ANOVA, we make the following assumptions:
+To carry out hypothesis testing using parametric distributions, we make the following assumptions (\cite{freedman_statistical_2005}):
+
 \begin{enumerate}
-\item the $\eps$ are normally distributed with mean $0$ and common variance $\sigma^2$
-\item $\eps \independent X$
-\item \textcolor{red}{ what else? }
+\item Linearity: the data $Y$ are related to $X$ and $Z$ linearly
+\item Constant slopes: stratum only affects the intercept $\alpha_j$, not the slopes $\beta$
+\item IID Errors: the $\eps_{ij}$ are independent and identically distributed with mean $0$ and variance $\sigma^2$
+\item Independence: if $X$ is random, $\eps \independent X$
+\item Normality: the errors are normally distributed
 \end{enumerate}
 
-The model is fit using least squares.
+The coefficients are estimated using least squares.\footnote{
+Note, only Assumptions (1) and (2) are needed to guarantee the existence of a solution.
+If there is a linear relationship between $X$, $Z$, and stratum, the solution will not be unique.
+}
 A significance test is done for the estimated coefficient $\hat{\gamma}$, using the $t$-distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
 The test statistic is
 $$ t = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}},$$
-where $\hat{\sigma}_{\hat{\gamma}}^2$ is the estimated standard error of $\hat{\gamma}$, obtained from the diagonal element of the inverse covariance matrix of the observed data which corresponds to the treatment.
-\todo{cite freedman linear models textbook}
+where $\hat{\sigma}_{\hat{\gamma}}^2$ is the estimated standard error of $\hat{\gamma}$.\footnote{
+$\hat{\sigma}_{\hat{\gamma}}^2$ is estimated by first computing the residual standard error $\hat{\sigma}^2$,
+then taking the diagonal element corresponding to the treatment variable in the inverse covariance matrix of covariates.
+}
 
 \todo{Add a paragraph about why this might go wrong, perhaps some citations. All depends on estimating the error variance correctly, because $t$ distribution is the ratio of a normal and a chi-square}
-\bit
-\item This ANOVA model allows for fixed stratum effects, but they are only additive in the outcome.  The model does not account for differences in the treatment effect across strata.  In other words, the estimated linear model is not a good estimate of the true data-generating process.  If effects are not constant across strata, then the coefficient $\gamma$ may be attenuated towards 0.  A test of the null hypothesis that $\gamma = 0$ will be valid, but will not reflect the true magnitude of treatment effects among individuals.
-\item \textcolor{red}{ what else? }
-\eit
+
+
+The ANCOVA model allows for fixed stratum effects, but they are only additive in the outcome.  
+The model does not account for differences in the treatment effect across strata.  
+The estimated linear model may not accurately capture details of the true data-generating process.  
+If effects are not constant across strata, then the coefficient $\gamma$ may be attenuated towards 0.  
+A test of the null hypothesis that $\gamma = 0$ will be valid, but will not reflect the true magnitude of treatment effects among individuals.
 
 \subsection{Stratified permutation test}
 Suppose we wish to test the null hypothesis that individual by individual, treatment has no effect.
