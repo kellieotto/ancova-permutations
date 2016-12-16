@@ -57,21 +57,24 @@ RB
 
 \begin{abstract}
 \noindent\textbf{Background:}
-In clinical trials, the standard analysis of the effectiveness of one treatment over another is a parametric analysis of covariance (ANCOVA), a method based on linear regression which relies on uncheckable and ostensibly implausible assumptions such as constant treatment effects across groups, normality of errors, and homoskedasticity.
-The decision of the effectiveness of the treatment is based upon a single p-value from this hypothesis test, which may not be valid if the assumptions are not met.
-One would like to run some sort of robustness check, an additional test or something, whose results can call into question or give evidence in favor of the results from the ANCOVA.
+In clinical trials, the standard method of measuring the effectiveness of one treatment over another is a parametric analysis of covariance (ANCOVA), a special case of linear regression which incorporates stratification.
+The method relies on strong, untestable assumptions about the data-generating process such as constant treatment effects across groups, normality of errors, and homoskedasticity.
+The effectiveness of the treatment is decided by the p-value from this hypothesis test, which may not be valid if the assumptions for ANCOVA are not met.
+We would like to understand which assumptions may be relaxed or violated for the ANCOVA to remain valid (but potentially less powerful).
 
 \noindent\textbf{Methods:}
 Permutation tests present such an opportunity: they require only minimal assumptions which are often guaranteed by the randomization that was conducted.
-In contrast to parametric tests, which rely up on stringent assumptions to obtain null distributions with a simple closed form, permutation tests use the assumption of exchangeability or randomization to construct approximate null distributions by simulation, yielding (approximately) exact tests.
-In order to mimic the ANCOVA that is typically done, we compare several permutation tests based on linear models, which enable one to control for pretreatment covariates and nuisance variables.
+In contrast to parametric tests, which rely up on strong assumptions to obtain a null distribution with a simple closed form, with permutation tests one uses the assumption of exchangeability or randomization to construct approximate null distributions by simulation.
+These tests are exact, even in finite samples.
+We compare ANCOVA to several permutation tests based on linear models, all of which control for pretreatment covariates to increase power and precision.
 
 \noindent\textbf{Results:}
-We present simulations showing that the permutation methods maintain power comparable to the ANCOVA in randomized trials.
-We illustrate the use of permutation tests alongside the parametric ANCOVA using data from a clinical trial across eight sites with different numbers of patients.
+Our simulations show that the permutation methods maintain power comparable to the ANCOVA in randomized trials.
+We illustrate the use of permutation tests alongside the parametric ANCOVA using data from a clinical trial conducted across eight sites,
+each having a different numbers of patients.
 
 \noindent\textbf{Conclusions:}
-These results suggest that the parametric ANCOVA and linear model permutation tests perform similarly, even when the more stringent assumptions for the parametric test are not met.
+These results suggest that the parametric ANCOVA and linear model permutation tests perform similarly, even when not all assumptions for the parametric test are met.
 
 
 \end{abstract}
@@ -80,67 +83,76 @@ These results suggest that the parametric ANCOVA and linear model permutation te
 \newpage
 
 \section{Background}
-% The Background section should explain the background to the study, its aims, a summary of the existing literature and why this study was necessary or its contribution to the field.
-A hypothesis test is a statistical method for determining whether observed data is consistent with a hypothesis about the process that generated the data.
-Medical trials use hypothesis testing to assess the evidence that a treatment has an effect on one or more clinically relevant outcomes.
-The simplest version of this experiment, which involves randomly assigning treatment to a fixed number of individuals in a group and measuring a single outcome, has been studied for nearly a century (see \citet{fisher_design_1935} and \citet{neyman_application_1923} for early references).
+A hypothesis test is a statistical method for determining whether observed data is consistent with a belief about the process that generated the data.
+Medical experiments use hypothesis testing to assess the evidence that a treatment has an effect on one or more clinically relevant outcomes.
+The simplest version of this experiment, which involves randomly assigning two treatments to a fixed number of individuals in a group and measuring a single outcome, has been studied for nearly a century (see \citet{fisher_design_1935} and \citet{neyman_application_1923} for early references).
 One can conduct hypothesis tests and construct confidence intervals for the estimated treatment effect
-by exploiting the fact that the difference in average outcomes between the treatment and control groups is asymptotically normal with a variance that can be estimated from the data.
+by exploiting the fact that the difference in average outcomes between the two treatment groups is asymptotically normal with a variance that can be estimated from the data.
 
 Randomized experiments in the real world are rarely this simple:
 individuals are heterogeneous with respect to pretreatment covariates,
+there may be more than two treatments under study,
 they may not take the treatment they are assigned or may drop out of the study,
 and an individual's assignment to treatment may affect others' outcomes.
 Techniques have been developed to deal with each of these issues.
 In this paper, we focus on the first.
 
-Random assignment of treatment ensures that on average, across all possible randomizations, pretreatment covariates are balanced between treatment groups.
-However, in any particular randomization that is realized, there may be imbalances.
-If these covariates are predictive of the outcome, then even when there is no effect of treatment, differences in outcomes between treatment groups may appear.
-Controlling for such baseline covariates can reduce the variability of estimated treatment effects and yield more powerful hypothesis tests.
+Random assignment of treatment ensures that pretreatment covariates are balanced between treatment groups on average, across all possible randomizations.
+However, in any particular randomization, there may be imbalances.
+If the imbalanced covariates are associated with the outcome, then even when there is no effect of treatment, we may observe differences in outcomes between treatment groups.
+Controlling for such baseline covariates can reduce the variability of estimated treatment effects and yield more powerful hypothesis tests. \todo{cite}
 
-Another method for controlling for baseline covariates is stratification:
-individuals are divided into groups based on levels of some covariate.
+Stratification is one method for controlling for covariates that are known a priori to be associated with the outcome.
+Individuals are divided into groups based on levels of this covariate, and random assignment of treatments is conducted within each group, independently across groups.
+This guarantees that the stratification variable is balanced between treatment groups.
+The stratification is done \textit{before any outcome data is collected}.
 A common stratification variable in clinical experiments is location:
 individuals often come from many sites because it is difficult to recruit a sufficient number of participants at one doctor's office or hospital.
-Treatments are randomly assigned  \textit{within strata} to guarantee that the stratum variable is balanced between treatment groups.
 As with other pretreatment covariates, outcomes may vary across strata due to factors unrelated to individuals.
 Controlling for stratum can have the same beneficial effects as controlling for other pretreatment covariates.
 
-\todo{not happy with this paragraph}
-The most common way to control for covariates is linear regression.
-The premise is to project the outcomes onto a linear plane which describes the contribution of each covariate to determining the outcome.
-The coefficient of any particular variable answers the question, if we were to hold fixed all other covariates and increase this variable by one unit, how much would the outcome change?
-This model posits a linear relationship between covariates, treatment, and outcome; if the true relationship is not linear, then it is unclear what such a regression is estimating.
-However, if one knows all covariates related to the outcome and fits a fully saturated linear model (including all covariates and their interactions), the coefficient for the treatment is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
+Linear regression is another common way to control for baseline covariates.
+It is done \textit{after} data are collected and outcomes are observed.
+Whereas stratification guarantees balance on the stratifying variable, other covariates may be imbalanced, so stronger modeling assumptions are needed to balance them after the fact.
+The idea of linear regression is to project the outcomes onto a plane which describes each variable's relationship to the outcome.
+The coefficient of any particular variable answers the question, if we were to hold fixed all other covariates and increase this variable by one unit, how much would we expect the outcome to change?
+This model posits a linear relationship between covariates, treatment, and outcome; 
+if the true relationship is not linear, then regression only estimates the best linear approximation to the conditional expectation of the outcome.
 When controlling for strata, such as location, it is standard to use analysis of covariance (ANCOVA), a particular case of linear regression which allows each stratum to have its own mean outcome level.
 This amounts to choosing the plane of best fit for the data, allowing each stratum to have a different intercept but enforcing that the slope is the same for each.
 
-Hypothesis testing of estimated coefficients requires even stronger assumptions than linearity, such as normally distributed and homoskedastic errors.
-When this holds, the distribution of a coefficient scaled by its estimated variance, has a $t$-distribution.
-Thus, a hypothesis test for a treatment effect amounts to a hypothesis test of the coefficient for treatment in the linear model, and can be evaluated analytically and quickly.
-However, these assumptions are clearly violated in many cases:
+Hypothesis testing of estimated coefficients requires even stronger assumptions than linearity, such as Gaussian, homoskedastic errors.
+When this holds, a regression coefficient scaled by its estimated variance follows Student's $t$ distribution.
+Thus, if we believe the linear model is correctly specified, a hypothesis test for a treatment effect amounts to a hypothesis test of the coefficient for treatment in the ANCOVA, and can be evaluated analytically and quickly.
+However, the assumptions necessary for the coefficient to be $t$ distributed are clearly violated in many cases:
 when the data are discrete or ordinal, when the treatment has a differential effect across strata, and when measurement error sizes differ across strata.
+Furthermore, the hypothesis test implicitly assumes that the data were sampled at random from some underlying population, when in fact,
+recruitment of patients to medical experiments is rarely done this way \todo{cite}.
 
-An alternative approach is permutation testing.
-Deliberate randomization induces a distribution for any test statistic under the null hypothesis that treatment has no effect on the outcome,
-because the randomization scheme provides information about all possible ways that treatment may have been assigned 
+An alternative approach is permutation testing. \todo{citations: fisher 1935, pitman 1937 and 1938}
+Deliberate randomization induces a distribution for any test statistic under the null hypothesis that treatment has no effect on the outcome:
+the randomization scheme provides information about all possible ways that treatment may have been assigned 
 and the null hypothesis tells us what each individual's response would be regardless of the assignment (namely, it would be the same).
-Instead of deciding how ``extreme'' the observed test statistic is relative to a parametric reference distribution, such as Student's $t$ or the Gaussian, one judges it against this randomization distribution.
+One determines how ``extreme'' the observed test statistic is relative to this randomization distribution, rather than a parametric reference distribution, such as Student's $t$ or the Gaussian.
 Such a test is exact, meaning that it controls the type I error rate at the pre-specified level, even in finite samples, whereas parametric hypothesis tests based on asymptotic approximations do not always guarantee good finite sample properties.
+Permutation tests achieve this by operating conditional on the observed sample; the resulting inference applies to the sample at hand, but does not necessarily generalize to other groups of individuals.
 In the past, parametric tests were necessary because asymptotic approximations were the only computationally feasible way to estimate distributions. 
 Now, computational power is no longer a barrier to finding exact (or exact to pre-specified precision) randomization distributions.
 In most cases, a randomization test is preferable to a parametric one:
 ``[a] corresponding parametric test is valid only to the extent that it results in the same statistical decision [as the randomization test]'' (\cite{bradley_distribution_1968}).
 
-\todo{ lit review: 
-\bit 
-\item cite the vickers paper
-\item what else have people done comparing linear models to permutation/nonparametric tests?
-\eit
-}
+There is no hard and fast rule describing the rate at which parametric tests approach the exact permutation solution, as they are both highly dependent on the particular data observed.
+On the one hand, some argue that violations of parametric test assumptions necessitate the use of permutation methods.
+\citet{ludbrook_why_1998} point out that medical trials rarely follow the population sampling model implicit in parametric methods.
+However, the parametric and nonparametric tests seem to perform similarly in most simulations, even when data violate the assumptions of the parametric method.
+Medical trials studying pain or perceived severity scores often use Likert scale data, which is discrete and does not match the normality assumptions of parametric tests.
+However, \citet{winter_five-point_2010} found that the two sample $t$ test and Mann-Whitney test had comparable Type I and II error rates for five-point Likert scale data, suggesting that the violation of normality does not entirely invalidate the parametric test.
+\todo{what other linear model comparisons have people done?}
+Most similar to our question of study, \citet{vickers_parametric_2005} compared the parametric ANCOVA to the Mann-Whitney rank test in the context of randomized experiments, finding that except in extreme situations, ANCOVA outperformed the nonparametric test.
 
-In this paper, we review ANCOVA and its permutation counterparts, comparing their performance in different scenarios, and illustrating their application with a clinical dataset.
+
+In this paper, we review hypothesis tests for a treatment effect which incorporate covariate adjustment to increase power.  
+We focus on ANCOVA and its permutation counterparts, comparing their performance in different scenarios, and illustrating their application with a clinical dataset.
 We find in simulations that even when assumptions are not satisfied, the parametric and permutation tests have comparable power to detect a treatment effect.
 We apply each of the methods to data from a clinical trial seeking to compare the performance of two treatments for gastroesophageal reflux disease (GERD).
 We conclude by discussing implications of these results for practitioners.
@@ -153,28 +165,25 @@ We conclude by discussing implications of these results for practitioners.
 %a clear description of all processes, interventions and comparisons. Generic drug names should generally be used. When proprietary brands are used in research, include the brand names in parentheses
 %the type of statistical analysis used, including a power calculation if appropriate
 
-\subsection{Problem and notation}
-Suppose we randomly assign two treatments to a group of individuals
-Let $Z$ be treatment assignment, 0 or 1, and we are interested in comparing the relative effectiveness of treatment 1 to treatment 0.
-$Y$ is the outcome of interest observed for all individuals.
-$X$ is a pretreatment covariate that we observe and is related to the outcome (may or may not be causal).  
-Without loss of generality, we suppose that $X$ is univariate, but we could easily extend all of these results to multivariate $X$.
+\subsection{Problem and notation \todo{what do others call this?}}
+Suppose we randomly assign two treatments labelled $0$ and $1$ to a group of individuals.
+We are interested in comparing the relative effectiveness of treatment 1 to treatment 0.
+Let $Z$ indicate treatment assignment, 0 or 1, 
+$Y$ denote the observed outcome of interest,
+and $X$ be a pretreatment covariate that is observed and associated with the outcome.
+For expository clarity, we suppose that $X$ is univariate, but all results are easily extended to the case when $X$ is multivariate.
+Suppose there is a categorical pretreatment variable with $J$ levels used to stratify individuals. 
 
-Suppose there is another nuisance variable $\mathcal{J}$. 
-$\mathcal{J}$ is a pretreatment variable used to stratify individuals. 
-There may be some unobservable heterogeneity in outcomes across levels of $\mathcal{J}$.
-
-We observe $\{Y_{ij}(Z_{ij}), Z_{ij}, X_{ij}\}$ for units $i = 1, \dots, n_j$, in strata $j = 1, \dots, J$.
-All units have two potential outcomes, $Y_{ij}(1)$ and $Y_{ij}(0)$, representing their responses to treatments $1$ and $0$, respectively.
-We can never observe both; random assignment of treatment reveals one.
+We observe $\{Y_{ij}, Z_{ij}, X_{ij}\}$ for individuals $i = 1, \dots, n_j$, in strata $j = 1, \dots, J$.
+All individuals have two potential outcomes, $Y_{ij}(1)$ and $Y_{ij}(0)$, representing their responses to treatments $1$ and $0$, respectively.
+We can never observe both; random assignment of treatment reveals $Y_{ij} = Z_{ij}Y_{ij}(1) + (1-Z_{ij})Y_{ij}(0)$.
 
 We are interested in the differences in potential outcomes $Y_{ij}(1) - Y_{ij}(0)$.
-This difference represents the effect of treatment for individual $i$ in group $j$: it is the difference between what we would have observed under treatment 1 and what we would have observed under treatment $0$.
-Depending on the method of analysis one chooses, different functions of these differences will be considered.
-Any of these quantities may be of clinical interest; it is a matter of philosophy which one prefers.
-A typical problem is to estimate one of these averages.
-Instead, we will focus on hypothesis testing.
-Below, we outline a few approaches to studying the average treatment effect, explain the assumptions that are necessary, and 
+This difference represents the effect of treatment for individual $i$ in group $j$: it is the difference between what we would have observed under treatment 1 and what we would have observed under treatment $0$.\footnote{
+Depending on the method of analysis one chooses, various functions of these differences will be considered.
+Any of these quantities may be of clinical interest; it is a matter of philosophy which one prefers.}
+A typical problem is to estimate the average of differences $Y_{ij}(1) - Y_{ij}(0)$.
+Instead of estimation, we will focus on hypothesis testing for whether these differences are nonzero.
 
 \subsection{Parametric ANCOVA}
 
@@ -182,34 +191,36 @@ The model is
 
 $$Y_{ij} = \alpha_j + \beta X_{ij} + \gamma Z_{ij} + \eps_{ij}$$
 
-where $\alpha_j$ is a fixed effect for stratum $j$, $\beta$ is the coefficient for the pretreatment covariate,
+\noindent where $\alpha_j$ is a fixed effect for stratum $j$, $\beta$ is the coefficient for the pretreatment covariate,
 $\gamma$ is the coefficient for treatment,
 and $\eps_{ij}$ is an error term.
 The parameter of interest is $\gamma$, which represents the average treatment effect in the sample. 
+If we believe the linear model is correctly specified, it asserts that for each individual, $Y(1) = Y(0) + \gamma$.
 We would like to test the null hypothesis $H_0: \gamma = 0$ against
 the two-sided alternative hypothesis $H_1: \gamma \neq 0$.
 
-To carry out hypothesis testing using parametric distributions, we make the following assumptions (\cite{freedman_statistical_2005}):
+To carry out the standard parametric hypothesis test, we make the following assumptions (\cite{freedman_statistical_2005}):
 
 \begin{enumerate}
-\item Linearity: the data $Y$ are related to $X$ and $Z$ linearly
-\item Constant slopes: stratum only affects the intercept $\alpha_j$, not the slopes $\beta$
-\item IID Errors: the $\eps_{ij}$ are independent and identically distributed with mean $0$ and variance $\sigma^2$
-\item Independence: if $X$ is random, $\eps \independent X$
-\item Normality: the errors are normally distributed
+\item \textbf{Linearity:} The data $Y$ are related to $X$ and $Z$ linearly.
+\item \textbf{Constant slopes:} Stratum only affects the intercept $\alpha_j$, not the slopes $\beta$ and $\gamma$.
+\item \textbf{IID Errors:} The $\eps_{ij}$ are independent and identically distributed with mean $0$ and variance $\sigma^2$.
+\item \textbf{Independence:} If $X$ is random, $\eps \independent X$.\footnote{$\independent$ means statistical independence; $\perp$ means orthogonal.}
+\item \textbf{Normality:} The errors are normally distributed.
 \end{enumerate}
 
 The coefficients are estimated using least squares.\footnote{
 Note, only Assumptions (1) and (2) are needed to guarantee the existence of a solution.
-If there is a linear relationship between $X$, $Z$, and stratum, the solution will not be unique.
+The solution will be unique as long as there is no linear relationship between $X$, $Z$, and stratum membership.
 }
-A significance test is done for the estimated coefficient $\hat{\gamma}$, using the $t$-distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
-The test statistic is
-$$ t = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}},$$
-where $\hat{\sigma}_{\hat{\gamma}}^2$ is the estimated standard error of $\hat{\gamma}$.\footnote{
+Under the null hypothesis, the test statistic 
+$$ T = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}},$$
+where $\hat{\sigma}_{\hat{\gamma}}^2$ is the estimated standard error of $\hat{\gamma}$,\footnote{
 $\hat{\sigma}_{\hat{\gamma}}^2$ is estimated by first computing the residual standard error $\hat{\sigma}^2$,
 then taking the diagonal element corresponding to the treatment variable in the inverse covariance matrix of covariates.
 }
+follows the Student $t$ distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
+The p-value for this hypothesis test is the probability that a value drawn from this $t$ distribution is larger in magnitude than $T$.
 
 \todo{Add a paragraph about why this might go wrong, perhaps some citations. All depends on estimating the error variance correctly, because $t$ distribution is the ratio of a normal and a chi-square}
 
@@ -302,7 +313,7 @@ This can be done visually using scatterplots and residual plots.
 
 Others have developed approximate permutation tests which use linear regression to adjust for covariates. 
 \bit
-\item Cite a few here, 
+\item Cite a few here, \todo{all the Anderson papers}
 \item explain why Freedman-Lane is best. 
 \item Cite some people who have shown by simulation that it works better.
 \eit
@@ -448,10 +459,12 @@ As mentioned, this should not be an issue since we permute treatments within sit
 % This section should discuss the implications of the findings in context of existing research and highlight limitations of the study.
 
 \bit
-\item This paper adds to the literature comparing parametric and nonparametric tests
-\item In randomized control trials, there is no substantial difference between parametric and nonparametric approaches.  They are asymptotically equivalent to begin with (find a citation). But our simulations, using small sample sizes, show that they give comparable results anyway.
+\item This paper adds to the literature comparing parametric and nonparametric tests.
+Our results match those of \citet{vickers_parametric_2005}, where he found that ANCOVA performed the same or better than nonparametric tests.
+%In randomized control trials, there is no substantial difference between parametric and nonparametric approaches.  They are asymptotically equivalent to begin with (find a citation). But our simulations, using small sample sizes, show that they give comparable results anyway.
 \item Results about differenced vs raw outcomes. This isn't new but our simulations and empirical dataset confirm it in the context of permutation tests
-\item 
+\item In an ideal case, one knows all covariates related to the outcome and fits a fully saturated linear model (including all covariates and their interactions), the coefficient for the treatment is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
+\item Permutation tests don't come free of assumptions, though.  \citet{romano_behavior_1990} warns against using permutation tests naively, if items are not truly exchangeable. For instance, he points to the case where observations have unequal variances.  \citet{boik_fisherpitman_1987} illustrates this phenomenon, comparing the normal theory $F$ test to its permutation counterpart and demonstrating by simulation that the latter has larger than nominal level.
 \eit
 
 
