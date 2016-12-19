@@ -168,10 +168,10 @@ We conclude by discussing implications of these results for practitioners.
 \subsection{Problem and notation \todo{what do others call this?}}
 Suppose we randomly assign two treatments labelled $0$ and $1$ to a group of individuals.
 We are interested in comparing the relative effectiveness of treatment 1 to treatment 0.
-Let $Z$ indicate treatment assignment, 0 or 1, 
-$Y$ denote the observed outcome of interest,
-and $X$ be a pretreatment covariate that is observed and associated with the outcome.
-For expository clarity, we suppose that $X$ is univariate, but all results are easily extended to the case when $X$ is multivariate.
+Let $\mathbf{Z}$ indicate treatment assignment, 0 or 1, 
+$\mathbf{Y}$ denote the observed outcome of interest,
+and $\mathbf{X}$ be a pretreatment covariate that is observed and associated with the outcome.
+For expository clarity, we suppose that $\mathbf{X}$ is univariate, but all results are easily extended to the case when $\mathbf{X}$ is multivariate.
 Suppose there is a categorical pretreatment variable with $J$ levels used to stratify individuals. 
 
 We observe $\{Y_{ij}, Z_{ij}, X_{ij}\}$ for individuals $i = 1, \dots, n_j$, in strata $j = 1, \dots, J$.
@@ -205,16 +205,16 @@ the two-sided alternative hypothesis $H_1: \gamma \neq 0$.
 To carry out the standard parametric hypothesis test, we make the following assumptions (\cite{freedman_statistical_2005}):
 
 \begin{enumerate}
-\item \textbf{Linearity:} The data $Y$ are related to $X$ and $Z$ linearly.
+\item \textbf{Linearity:} The data $\mathbf{Y}$ are related to $\mathbf{X}$ and $\mathbf{Z}$ linearly.
 \item \textbf{Constant slopes:} Stratum only affects the intercept $\alpha_j$, not the slopes $\beta$ and $\gamma$.
 \item \textbf{IID Errors:} The $\eps_{ij}$ are independent and identically distributed with mean $0$ and variance $\sigma^2$.
-\item \textbf{Independence:} If $X$ is random, $\eps \independent X$.\footnote{$\independent$ means statistical independence; $\perp$ means orthogonal.}
+\item \textbf{Independence:} If $\mathbf{X}$ is random, $\eps \independent X$.\footnote{$\independent$ means statistical independence; $\perp$ means orthogonal.}
 \item \textbf{Normality:} The errors are normally distributed.
 \end{enumerate}
 
 The coefficients are estimated using least squares.\footnote{
 Note, only Assumptions (1) and (2) are needed to guarantee the existence of a solution.
-The solution will be unique as long as there is no linear relationship between $X$, $Z$, and stratum membership.
+The solution will be unique as long as there is no linear relationship between $\mathbf{X}$, $\mathbf{Z}$, and stratum membership.
 }
 Under the null hypothesis, the test statistic 
 $$ T = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}},$$
@@ -241,78 +241,84 @@ This is referred to as the ``sharp null'' hypothesis:
 $$H_0: Y_{ij}(1) = Y_{ij}(0), i = 1, \dots, n_j, j = 1,\dots, J.$$
 
 Then, which treatment that individual $ij$ received amounts to an arbitrary label.
-Once we observe their response under treatment $Z_{ij}$, we know what it would have been under treatment $1-Z_{ij}$; namely, it would have been the same.
+Once we observe their response under one treatment, we can impute the other potential outcome; namely, it would have been the same.
+This is a stronger assertion than the null hypothesis for the parametric ANCOVA, which only considers the average treatment effect.
 
-If treatment was completely randomized across strata, independently across strata,
-then we may condition on the number of individuals who received each treatment within each stratum.
+For the permutation test, we condition on the number of individuals who received each treatment within each stratum.
 Any assignment of treatments which preserves the number of treated units within each stratum is valid and was just as likely to occur as the randomization that was actually observed.
-By using this principle of equal probabilities and by imputing the unobserved potential outcomes under the sharp null hypothesis, we can construct the permutation distribution of any statistic under the null hypothesis.
+We can construct the permutation distribution of any statistic under the null hypothesis by using this principle of equal probabilities and imputing the unobserved potential outcomes under the sharp null hypothesis.
 
-The most commonly used statistic is the difference in mean outcomes of people who received drug 1 and the mean outcomes of people who received drug 0.  This statistic is readily interpretable (``on average, taking the drug changes the outcome by x amount'') and has nice theoretical properties owing to it being the difference of two sums.
-When we want to be sensitive to differences in the magnitude of the effect, the difference in means may not be optimal.  For an extreme example, imagine that there are $n/2$ males and $n/2$ females in the sample, $n/4$ males and females receive each treatment.  Those who receive treatment 0 have an outcome of 0, the males who receive treatment 1 have an outcome of 1, and the females who receive treatment 1 have an outcome of -1.  Then the difference in means between the treatment groups will be $0$, even though the treatment had a positive effect on males and negative effect on females.  This differential effect will be averaged out.
-Thus, one may want to stratify the sample according to important confounding variables, then take the difference in means within each stratum separately. 
+The most commonly used statistic is the difference in mean outcomes of people who received treatment 1 and the mean outcomes of people who received treatment 0.  
+This statistic is readily interpretable (``on average, taking treatment changes the outcome by x amount'') and has nice theoretical properties owing to it being the difference of two sums.
+However, the difference in means may not be optimal if we want to be sensitive to heterogeneous effects.  
+For an extreme example, imagine that there an equal number of males and females in the sample, and each treatment is assigned to half of males and half of females.  
+Everybody who receives treatment 0 has an outcome of 0, but males who receive treatment 1 have an outcome of $1$ and females who receive treatment 1 have an outcome of $-1$.  
+Then the difference in means between the treatment groups is $0$, even though the treatment had nonzero effects on both males and females.  
+This differential effect gets averaged out.
 
+One may want to stratify the sample according to important confounding variables, then compute a statistic for each stratum separately. 
 There is a great degree of freedom in choosing how exactly to construct such a statistic.
-Two factors must be decided: how to stratify and how to combine the individual means.
+Two factors must be decided: how to stratify and how to combine the individual strata statistics.
 There is a tradeoff in how finely we choose to stratify:
-on the one hand, we need all of the strata to be sufficiently large, otherwise they don't contribute any information to the test statistic,
- but on the other hand, we want the strata to capture variation in treatment effects.
-\todo{discussion of NPC and cite papers}
+on the one hand, the strata must be sufficiently large to be informative,
+ but on the other hand, must be fine enough to capture variation in treatment effects.
+Our simulations in Section~\ref{simulations} show a loss of power when effects are concentrated in small strata.
+
+One way to construct a test statistic is to combine the statistics directly, for instance taking the sum of absolute values, into a single statistic on the data.
+Taking the absolute value before summing ensures that effects with different signs do not cancel each other out.
+The permutation test is conducted identically, using this statistic in place of the difference in means.
+Another way to construct a test is to use the nonparametric combination (NPC) framework proposed by \citet{pesarin_permutation_2010}.
+In this framework, we would break down the ``global'' null hypothesis of no effect whatsoever into the intersection of null hypotheses of no treatment effect within each stratum.
+For NPC, one first conducts each partial test separately, then combines their $p$-values in a way that preserves dependencies.
+In this case, strata are randomized independently so there are no dependencies to preserve, making this method is equivalent to the first.
 
 
 \subsection{Permutation tests with the linear model}
-We would like to test for a difference in outcomes between two treatments, but control for other covariates that may be predictive of the outcome.
-For example, if the outcome is the outcome after receiving treatment, we would like to control for the same variable measured before treatment was administered.
-When the outcome is the difference in responses between the second and first weeks, we would just like to control for location.
-We will use the approximate permutation test derived by Freedman and Lane (1983) to do so.
+The tests in the previous section only use information on the treatment and the outcome.
+However, experimenters record additional covariates, some of which may be predictive of the outcome.
+One would like to construct a more powerful test by incorporating these covariates in a way to reduce the variance of the statistic.
+In particular, we can turn the parametric ANCOVA into a nonparametric permutation test.
+We will model the outcome as in Equation~\ref{eqn:ancova}.
+In a randomized experiment, the treatment assignment is independent of covariates, errors, and potential outcomes.
+This makes several things ``permutable'' and allows us to construct several different tests.
 
-Under the sharp null $H_0$, $Z$ has no effect on $Y$.
-In other words, the null hypothesis is that $\beta_2 = 0$.
-In a randomized experiment such as this, there are two ways we may test this null hypothesis.
+First, we may do a simple variation on the stratified permutation test described above.
+Instead of using the difference in means as the statistic, we use the $t$ statistic for the coefficient on $\mathbf{Z}$ in a linear regression.
+If treatment was assigned at random within each stratum, then it is guaranteed that $\mathbf{Z}$ and $\mathbf{\varepsilon}$ are statistically independent, conditional on stratum.
+Therefore, we may conduct a test by permuting treatment assignments $\mathbf{Z}$ within site, independently across sites, and calculating a test statistic for each such permutation.
 
-\subsubsection{Standard linear model}
-We may do a variation on the stratified two-sample test described above.
-Instead of using the difference in means as the statistic, we can use the t-statistic for the coefficient on $Z$ in a linear regression.
-If treatment was assigned at random within each stratum, then it is guaranteed that $Z$ and $\varepsilon$ are statistically independent, conditional on stratum.
-Therefore, we may conduct a test by permuting treatment assignments $Z$ within site, independently across sites, and calculating a test statistic for each such permutation.
-
-\subsubsection{Linear model residuals}
-
+\citet{freedman_nonstochastic_1983} propose an alternative test based on the residuals of the linear regression.
 Let's take an alternative view of the problem.
-We still write $Y = \beta_0 + \beta_1 X + \beta_2 Z + \varepsilon$.
-However, now, we do not treat the $\varepsilon$ as random.
-They are simply defined to be the diffence between $Y$ and the data's linear projection onto the plane $\beta_0 + \beta_1 X + \beta_2 Z$.
+We still write the outcome in the form of Equation~\ref{eqn:ancova}, but now, we do not treat the $\varepsilon_{ij}$ as random.
+They are simply defined to be the difference between the observed outcome $Y_{ij}$ and the data's linear projection onto the plane $\alpha_j + \beta X_{ij}+ \gamma Z_{ij}$.
 
-If the null hypothesis is true, then $\varepsilon = Y - \beta_0 - \beta_1X$.
-We may regress $Y$ on $X$ to obtain coefficient estimates $\hat{\beta}_0$ and $\hat{\beta}_1$.
-Then we would predict the outcome to be $\hat{Y} = \hat{\beta}_0 + \hat{\beta}_1X$
-and we may estimate the errors $\hat{\varepsilon}$ by $Y - \hat{Y}$.
-The $\hat{\varepsilon}$ approximate the true errors $\varepsilon$ from the true data-generating process, assuming that the null hypothesis is true and the linear model has a reasonable in-sample fit.
-Furthermore, under the null hypothesis, the $\varepsilon$ are independent of $X$ and $Z$. \todo{ this is false. fix}
-Therefore, within sites, these estimated $\hat{\varepsilon}$ are approximately exchangeable.
-Note that the exchangeability is only approximate, because $\hat{\varepsilon}$ will have some correlation with $X$ due to the finite sample size. \todo{ fix wording}
+If the null hypothesis is true, then $\gamma = 0$ and $\varepsilon_{ij} = Y_{ij} - \alpha_{ij} - \beta X_{ij}$ for all $i = 1, \dots, n_j, j = 1, \dots, J$.
+We may regress $\mathbf{Y}$ on $\mathbf{X}$ to obtain coefficient estimates $\hat{\alpha}_j$ and $\hat{\beta}$.
+Then we would predict the outcome to be $\hat{Y}_{ij} = \hat{\alpha}_j + \hat{\beta}X_{ij}$
+and we may estimate the errors $\mathbf{\hat{\varepsilon}}$ by $\mathbf{Y} - \mathbf{\hat{Y}}$.
+The $\mathbf{\hat{\varepsilon}}$ approximate the true errors $\mathbf{\varepsilon}$ from the true data-generating process, assuming that the null hypothesis is true and the linear model has a reasonable in-sample fit.
+Furthermore, under the null hypothesis, the $\mathbf{\varepsilon}$ are independent $\mathbf{Z}$ within strata. 
+If we make the additional assumption that $\mathbf{\varepsilon}$ are exchangeable against $\mathbf{X}$ within strata, then 
+we may permute the estimated $\hat{\varepsilon}$ within strata, independently across strata.
 
 We construct a permutation distribution using several steps:
 
 \begin{enumerate}
-\item Estimate $\hat{\varepsilon}$ by $Y - \hat{\beta}_0 - \hat{\beta}_1 X$, where $\hat{\beta}_0$ and $\hat{\beta}_1$ are obtained by regressing $Y$ on $X$.
-\item Construct permuted errors $\hat{\varepsilon}^\pi$ by permuting the $\hat{\varepsilon}$ within sites.
-\item Construct permuted responses $Y^\pi = \hat{\beta}_0 + \hat{\beta}_1 X + \hat{\varepsilon}$.
-\item Regress $Y^\pi$ on $X$ and $Z$. The test statistic is the $t$-statistic for the coefficient of $Z$.
+\item Estimate $\mathbf{\hat{\varepsilon}}$ by $Y_{ij} - \hat{\alpha}_j - \hat{\beta} X_{ij}$ for all $i$ and $j$, where $\hat{\alpha}_j$ and $\hat{\beta}$ are obtained by regressing $\mathbf{Y}$ on $\mathbf{X}$ and stratum assignment.
+\item Construct permuted errors $\mathbf{\hat{\varepsilon}}^\pi$ by permuting the $\mathbf{\hat{\varepsilon}}$ within strata.
+\item Construct permuted responses $Y_{ij}^\pi = \hat{\alpha}_j + \hat{\beta} X_{ij}+ \hat{\varepsilon}_{ij}^\pi$.
+\item Regress $\mathbf{Y}^\pi$ on $\mathbf{X}$, $\mathbf{Z}$, and stratum. The test statistic is the $t$-statistic for the coefficient of $\mathbf{Z}$.
 \end{enumerate}
 
 
-\subsubsection{Other linear model tests}
 It is important to note that the permutation tests described here are only exact in the context of randomized experiments.
-In observational studies, they are only approximately exact under the best circumstances.
-What's the difference between these two situations?
-In randomized experiments, treatment is assigned at random, and is therefore statistically independent of the covariates $X$ and the errors $\varepsilon$.
-Conversely, in observational studies, treatment may be associated with $X$ and/or $\varepsilon$, often in a way that is difficult or impossible to model.
-Independence, or the weaker condition of exchangeability, is what enables us to construct permutation distributions while holding $X$ fixed.
-When exchangeability doesn't hold, it does not make sense to permute $Z$ while holding $X$ fixed, as we cannot disentangle the effect of one over the other.
+In observational studies, even under the best circumstances they are only approximately exact.
+In randomized experiments, treatment is assigned at random, and is therefore statistically independent of the covariates $\mathbf{X}$ and the errors $\mathbf{\varepsilon}$.
+Conversely, in observational studies, treatment may be associated with $\mathbf{X}$ and/or $\mathbf{\varepsilon}$, often in a way that is difficult or impossible to model.
+Independence, or the weaker condition of exchangeability, is what enables us to construct permutation distributions while holding $\mathbf{X}$ fixed.
+When exchangeability doesn't hold, it does not make sense to permute $\mathbf{Z}$ while holding $\mathbf{X}$ fixed, as we cannot disentangle the effect of one over the other.
 In order to justify the use of one of these linear model tests for a treatment effect in observational data, one must argue that the object being permuted is uncorrelated with the other variables being held fixed.
-This can be done visually using scatterplots and residual plots.
-\todo{citations!}
+This can be done visually using scatterplots and residual plots (\cite{freedman_nonstochastic_1983}).
 
 Others have developed approximate permutation tests which use linear regression to adjust for covariates. 
 \bit
@@ -323,7 +329,7 @@ Others have developed approximate permutation tests which use linear regression 
 
 
 \section{Results}
-\subsection{Simulations}
+\subsection{Simulations}\label{simulations}
 
 To compare the performance of these tests, we simulated data coming from a randomized experiment, using several different data-generating processes.
 We applied the tests to the data and compared their empirical power over repeated random treatment assignments and random errors.
@@ -364,9 +370,9 @@ The power curves are estimated by computing the proportion of observed p-values 
 
 In our first set of simulations, we assume that the baseline measurements $Y_{ij0}$ are standard normally distributed and the pairs $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 We will assume that $\beta_0 = 1$ and let the treatment effect be $\gamma = 1$
-For each of the two simulation designs that vary the treatment effect, we use two distributions of $\varepsilon$.
+For each of the two simulation designs that vary the treatment effect, we use two distributions of $\mathbf{\varepsilon}$.
 In the first case, we use $\varepsilon \sim N(0, 1)$ to fit with the parametric ANOVA assumption of normal errors.
-In the second case, $\varepsilon$ comes from a $t$ distribution with 2 degrees of freedom so the errors are heavy-tailed.
+In the second case, $\mathbf{\varepsilon}$ comes from a $t$ distribution with 2 degrees of freedom so the errors are heavy-tailed.
 Thus, there are four total simulation designs.
 
 Figure~\ref{fig:normal_sim_power} shows the estimated power curves in these four designs.
@@ -483,7 +489,7 @@ To reduce day-to-day variation, we averaged the measures in the pretreatment wee
 In our model, we treat site as the stratification variable, as this is the level at which treatment was randomized.
 We do not include country in the model, as a country-level effect should be captured in the site-level effects.
 The linear model for ANCOVA analysis is as in Equation~\ref{eqn:ancova}.
-We chose to use this form of the model, with the actual outcomes as the $Y$ and the baseline measures as control variables, rather than testing the difference in outcome and baseline. 
+We chose to use this form of the model, with the actual outcomes as the $\mathbf{Y}$ and the baseline measures as control variables, rather than testing the difference in outcome and baseline. 
 The outcome and baseline had a low correlation (for instance, $0.56$ for daily ``hrdq''), so we did not use their difference as the dependent variable. 
 As our simulations and previous work (\cite{frison_repeated_1992}) show, when the correlation between baseline and outcome is low, it is more powerful to control for baseline outcomes using a model.
 
@@ -524,7 +530,7 @@ Our results match those of \citet{vickers_parametric_2005}, where he found that 
 \bit
 \item \citet{gail_tests_1988} propose a randomization test based on residuals, using not a linear model but an exponential family model to construct residuals, and find that omitting relevant covariates leads to tests with higher than nominal level.  \todo{perhaps this is something that one should be mindful of when using these linear model based tests.}
 \item Freedman-Lane stuff: for the appro
-In randomized experiements, we are guaranteed that treatment $Z$ is independent of $\varepsilon$, conditional on stratum.
+In randomized experiments, we are guaranteed that treatment $\mathbf{Z}$ is independent of $\mathbf{\varepsilon}$, conditional on stratum.
 Indeed, the distribution of residuals looks nearly equal between treatment groups in both models.
 As mentioned, this should not be an issue since we permute treatments within sites, independently across sites.
 (In general, when treatment is not randomly assigned, this condition is necessary for the permutation test to be valid.)
