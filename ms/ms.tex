@@ -189,7 +189,7 @@ Instead of estimation, we will focus on hypothesis testing for whether these dif
 
 The model is
 
-\begin{equation}
+\begin{equation}\label{eqn:ancova}
 Y_{ij} = \alpha_j + \beta X_{ij} + \gamma Z_{ij} + \eps_{ij}
 \end{equation}
 
@@ -470,17 +470,42 @@ This phenomenon has been studied before by \citet{frison_repeated_1992}, who rec
 
 
 \subsection{Clinical data results}
+We compare the methods we discussed on a dataset from a clinical trial comparing the effectiveness of two treatments for gastroesophageal reflux disease (GERD).
+Patients were treated at eight sites in two different countries.
+At each site, patients were randomly assigned one of two treatments.
+Patients were observed for a week before receiving treatment and for a week after receiving treatment.
+On each of the fourteen days of observation, patients responded to a survey asking about their heartburn, regurgitation, and dyspepsia frequency and severity.
+These endpoints are measured on a discrete scale.
+There were several additional derived endpoints, such as daily regurgitation, daily ``hrdq'', and daily dyspepsia, which are functions of the survey measures.
+Daily ``hrdq'' was the primary endpoint.
+To reduce day-to-day variation, we averaged the measures in the pretreatment week and post-treatment week for each endpoint.
 
-\bit
-\item mention that we thought about whether to use the raw outcomes and adjust for baseline, or use outcome minus baseline. The outcome and baseline had a low correlation (include here), so we did not use their difference. As the simulations show, doing this actually reduces power
-\item Freedman-Lane stuff: for the appro
-For this dataset, we are guaranteed that treatment $Z$ is independent of $\varepsilon$, as it is randomized within site.
-Indeed, the distribution of residuals looks nearly equal between treatment groups in both models.
-The distribution of residuals varies a bit across sites, but they all appear roughly centered around 0.
-Sites 4 and 5 have larger variance in the differenced model.
-As mentioned, this should not be an issue since we permute treatments within sites, independently across sites.
-(In general, when treatment is not randomly assigned, this condition is necessary for the permutation test to be valid.)
-\eit
+In our model, we treat site as the stratification variable, as this is the level at which treatment was randomized.
+We do not include country in the model, as a country-level effect should be captured in the site-level effects.
+The linear model for ANCOVA analysis is as in Equation~\ref{eqn:ancova}.
+We chose to use this form of the model, with the actual outcomes as the $Y$ and the baseline measures as control variables, rather than testing the difference in outcome and baseline. 
+The outcome and baseline had a low correlation (for instance, $0.56$ for daily ``hrdq''), so we did not use their difference as the dependent variable. 
+As our simulations and previous work (\cite{frison_repeated_1992}) show, when the correlation between baseline and outcome is low, it is more powerful to control for baseline outcomes using a model.
+
+Figure~\ref{fig:clinical_distr} shows the distribution of each clinical endpoint, separated by treatment group.
+There is a clear visual difference in distributions for daily heartburn (``daily\_heart''), daily ``hrdq'', and heartburn frequency (``heart\_freq'').
+The difference is less clear for daily regurgitation (``daily\_regurg'') and regurgitation frequency (``regurg\_freq'').
+
+Table~\ref{tab:clinical_pvalues} shows the $p$-values for the four tests.
+Overall, the results confirm our expectations based on visual comparison in Figure~\ref{fig:clinical_distr}:
+one or more of the tests reject the null hypothesis that outcomes are the same between treatments for heartburn frequency, daily heartburn, and daily ``hrdq,''
+but not for any of the other endpoints.
+The three tests based on the linear model all give similar results here.
+The $p$-values for the ANCOVA tend to be smaller than the linear model and the residual permutation tests, while the $p$-values stratified, unadjusted permutation test have no consistent pattern.
+These results match our simulations: the parametric test has comparable or slightly higher power than the other permutation tests.
+
+\begin{figure}
+\centering
+\includegraphics[width = \textwidth]{fig/clinical_distr}
+\caption{Distribution of each endpoint for the two treatments A and B}
+\label{fig:clinical_distr}
+\end{figure}
+
 
 \begin{center}
 \input{fig/results_pvalue_summary.tex}
@@ -492,11 +517,18 @@ As mentioned, this should not be an issue since we permute treatments within sit
 \bit
 \item This paper adds to the literature comparing parametric and nonparametric tests.
 Our results match those of \citet{vickers_parametric_2005}, where he found that ANCOVA performed the same or better than nonparametric tests.
-%In randomized control trials, there is no substantial difference between parametric and nonparametric approaches.  They are asymptotically equivalent to begin with (find a citation). But our simulations, using small sample sizes, show that they give comparable results anyway.
 \item Results about differenced vs raw outcomes. This isn't new but our simulations and empirical dataset confirm it in the context of permutation tests
 \item In an ideal case, one knows all covariates related to the outcome and fits a fully saturated linear model (including all covariates and their interactions), the coefficient for the treatment is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
 \item Permutation tests don't come free of assumptions, though.  \citet{romano_behavior_1990} warns against using permutation tests naively, if items are not truly exchangeable. For instance, he points to the case where observations have unequal variances.  \citet{boik_fisherpitman_1987} illustrates this phenomenon, comparing the normal theory $F$ test to its permutation counterpart and demonstrating by simulation that the latter has larger than nominal level.
+\item Errors are very important!  They are a source of non-exchangeability.  We can't observe them, so we need to believe that they are actually homogeneous and do some checks on residuals to give evidence.
+\bit
 \item \citet{gail_tests_1988} propose a randomization test based on residuals, using not a linear model but an exponential family model to construct residuals, and find that omitting relevant covariates leads to tests with higher than nominal level.  \todo{perhaps this is something that one should be mindful of when using these linear model based tests.}
+\item Freedman-Lane stuff: for the appro
+In randomized experiements, we are guaranteed that treatment $Z$ is independent of $\varepsilon$, conditional on stratum.
+Indeed, the distribution of residuals looks nearly equal between treatment groups in both models.
+As mentioned, this should not be an issue since we permute treatments within sites, independently across sites.
+(In general, when treatment is not randomly assigned, this condition is necessary for the permutation test to be valid.)
+\eit
 \eit
 
 

@@ -86,7 +86,16 @@ plot_distrs <- lapply(continuous_vars, function(variable){
 #        scale_fill_discrete(name="Experimental\nCondition",
 #                       breaks=c("0", "1"),
 #                       labels=c("A", "B")) + 
-        labs(x = variable, fill = "Treatment")
+        labs(x = variable, fill = "Treatment") +
+        theme(
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        title = element_text(size = 16),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        strip.text.x = element_text(size = 12)
+        ) 
   return(p)
 })
 
@@ -96,7 +105,10 @@ legend <- tmp$grobs[[leg]]
 
 plot_distrs <- lapply(plot_distrs, function(x) x + theme(legend.position="none"))
 plot_distrs[[length(plot_distrs)+1]] <- legend
+
+pdf("../ms/fig/clinical_distr.pdf", width = 8, height = 4)
 do.call(grid.arrange, c(plot_distrs, nrow = 2))
+dev.off()
 ```
 
 # Analysis - Primary endpoint
@@ -106,7 +118,7 @@ the first model considers the final outcome measure, adjusting for site ID and p
 The second model considers the difference between outcome and baseline score as its dependent variable, adjusting for site ID.
 
 We compare four testing methods: 
-the usual parametric ANOVA,
+the usual parametric ANCOVA,
 a permutation test considering the difference in means as test statistic, stratifying by site,
 the stratified permutation test, using the $t$-statistic from the linear regression instead,
 and a permutation test in the style of Freedman and Lane (1983), using a linear regression to adjust for covariates.
@@ -121,13 +133,13 @@ print(xtable(summary_stats_hrdq,
       include.rownames = TRUE)
 ```
 
-## Parametric ANOVA
-First, we do a standard parametric ANOVA using the two models.
+## Parametric ANCOVA
+First, we do a standard parametric ANCOVA using the two models.
 Under model 1, using the outcome as response and adjusting for the baseline value, treatment has a significant effect.
 Under model 2, the significance goes away.
 (Note that treatment is still coded as A and B, which are characters. The `lm` function is smart enough to know that it should be coded as a factor, where we compare the effect of B relative to A. In general, be very careful when you're doing this!)
 ```{r hrdq_parametric, results = "asis"}
-# method 0: parametric ANOVA
+# method 0: parametric ANCOVA
 lm1 <- lm(Outcome ~ Baseline + tr + factor(SITEID), data = daily_hrdq)
 print(xtable(summary(aov(lm1))), include.rownames = TRUE)
 daily_hrdq$lm1_resid <- residuals(lm1)
@@ -157,7 +169,7 @@ Any assignment of treatments which preserves the number of treated and controls 
 Therefore, by using this principle of equal probabilities and by imputing the unobserved potential outcomes assuming that the null hypothesis is true, we may obtain the permutation distribution of any statistic under the null hypothesis.
 
 We compare two test statistics: the usual difference in means between group B and group A, and the difference in means within each site, aggregated by taking the sum of their absolute values over sites.
-The first statistic is more comparable to what one would obtain from an ANOVA and it is readily interpretable.
+The first statistic is more comparable to what one would obtain from an ANCOVA and it is readily interpretable.
 It does not directly account for the stratification by site, so variation between sites may be hidden.
 The second statistic is useful for testing the two-sided alternative hypothesis that treatment has some effect. 
 It may be more powerful than the simple difference in means if the effect of the drug varies across sites.
@@ -442,7 +454,7 @@ differenced_pvalues <- c(summary(aov(lm2))[[1]]["trB", "Pr(>F)"],
                      fl_pvalue_2)
 pvalues_table <- cbind(differenced_pvalues, outcome_pvalues)
 
-tests <- c("Parametric ANOVA", "Unadjusted permutation", "Unadjusted permutation (summed across strata)", "Linear regression permutation", "Residual permutation")
+tests <- c("Parametric ANCOVA", "Unadjusted permutation", "Unadjusted permutation (summed across strata)", "Linear regression permutation", "Residual permutation")
 rownames(pvalues_table) <- tests
 colnames(pvalues_table) <- c("Differences", "Outcome") 
 
@@ -459,7 +471,7 @@ continuous_vars <- c("heart_freq", "regurg_freq", "dysp_freq",
                     "daily_heart", "daily_regurg", "daily_hrdq",
                     "daily_dysp")
 
-tests <- c("Parametric ANOVA", "Unadjusted permutation", "Linear regression permutation", "Residual permutation")
+tests <- c("Parametric ANCOVA", "Stratified permutation", "LM permutation", "Residual permutation")
 pvalues_table_contin <- as.data.frame(matrix(NA, nrow = length(continuous_vars), ncol = 4))
 i <- 0
 
@@ -504,7 +516,8 @@ summarytab <- xtable(pvalues_table_contin,
              digits = 3,
              align = paste0(c("r|", rep("p{1.2in}", ncol(pvalues_table_contin))), 
                             collapse = ""),
-             caption = "Comparison of p-values from four tests, for each continuous endpoint.")
+             caption = "Comparison of p-values from four tests, for each continuous endpoint.",
+             label = "tab:clinical_pvalues")
 print(summarytab, include.rownames = TRUE)
 
 print(summarytab, include.rownames = TRUE, type="latex", file="../ms/fig/results_pvalue_summary.tex") 
