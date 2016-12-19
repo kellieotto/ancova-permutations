@@ -1,10 +1,9 @@
 ---
-title: "ANCOVA Comparison Simulations: Skewed, Poisson Data"
+title: "ANCOVA Comparison Simulations: Imbalanced Design"
 author: "Kellie Ottoboni"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, 
@@ -21,43 +20,26 @@ require(xtable)
 options(xtable.comment = FALSE, xtable.include.rownames = FALSE, xtable.align = "p{3.5cm}")
 require(grid)
 require(gridExtra)
-require(gtable)
 ```
 
-# Poisson data
+# Normal data
 
-As in the other simulations that use Gaussian data, we assume the following linear data-generating process:
+We assume the following linear data-generating process:
 
-$$\tilde{Y}_{ij1} =\beta_0Y_{ij0} + \beta_{j} + \gamma_j Z_{ij} + \varepsilon_{ij}$$
+$$Y_{ij1} =\beta_0Y_{ij0} + \beta_{j} + \gamma_j Z_{ij} + \varepsilon_{ij}$$
 
 for individuals $i = 1, \dots, n_j$, $j = 1, \dots, J$.
-$\beta_0$ is the coefficient for the baseline measurement $Y_{i0}$, $\beta_j$ is the mean effect of being at stratum $j$, $Z_{ij}$ is the treatment level indicator,, $\gamma_j$ is the effect of treatment at stratum $j$, and $\varepsilon_{ij}$ takes the values $0$ or $0.5$ with equal probability.
+$\beta_0$ is the coefficient for the standard normally-distributed baseline measurement $Y_{i0}$, $\beta_j$ is the mean effect of being in stratum $j$, $Z_{ij}$ is the treatment level, $\gamma_j$ is the effect of treatment in stratum $j$, and $\varepsilon_{ij}$ is an error term.
 We will assume that $\beta_0 = 1$.
-
-Now, instead of $Y_{ij0}$ being normally distributed, we let these baseline measurements come from a truncated Poisson distribution with mean 4, with values greater than 10 censored and set to 10.
-This is reflective of some survey data where individuals are asked to rate their experience on a scale from 1 to 10.
-The data are not only discrete but also skewed:
-more values are in the lower half of the range.
-
-We don't observe $\tilde{Y}_{ij1}$ but $Y_{ij1}$, which is defined as 
-
-\begin{displaymath}
-   Y_{ij1} = \left\{
-     \begin{array}{ll}
-       1 & \text{if } \tilde{Y}_{ij1} < 1\\
-       10 & \text{if } \tilde{Y}_{ij1} > 10 \\
-       \lfloor \tilde{Y}_{ij1} \rfloor & \text{otherwise}
-     \end{array}
-   \right.
-\end{displaymath}
+The observed $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 
 Suppose there are three strata with $\beta_1 = 1, \beta_2 = 1.5,$ and $\beta_3 = 2$.
-Assume that there are 16 individuals per stratum and treatment assignment is balanced, i.e. 8 people receive each treatment at each stratum.
+Assume that there are 16 individuals per stratum and treatment assignment is \textbf{imbalanced}: 12 people receive each treatment 0 and 4 people receive treatment 1.
 
 We use two designs:
 
 * Design 1: $\gamma_1 = \gamma_2 = \gamma_3 = 1$. This is the standard assumption of a constant, additive treatment effect.
-* Design 2: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect at stratum 1, but no treatment effect at strata 2 and 3. This is a simplistic case of heterogeneous treatment effects.
+* Design 2: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in stratums 2 and 3. This is a simplistic case of heterogeneous treatment effects.
 
 With these two designs, we vary the distribution of $\varepsilon$.
 In the first case, we use $\varepsilon \sim N(0, 1)$ to mimic the usual ANCOVA assumptions.
@@ -80,17 +62,11 @@ We regenerate $Z$, $\varepsilon$, and $Y_1$ 100 times for each design, then comp
 # Data-generation, tests, and plotting functions
 
 ```{r generate_sample}
-generate_outcome <- function(baseline, tr_effect, stratum_effect, error){
-  Y1 <- baseline + tr_effect + stratum_effect + error
-  Y1 <- floor(Y1)
-  Y1 <- pmax(pmin(Y1, 10), 1) 
-  return(Y1)
-}
-
-generate_simulated_data <- function(gamma, effect, n = c(16, 16, 16)){
+generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   # Input:
   # gamma = the magnitude of the treatment effect
   # effect = "same effect" or "single stratum effect" - which strata have a tr effect > 0?
+  # errors = "normal" or "heavy"
   # n = number of individuals at each stratum
   # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), stratumID (stratum), stratum_effect (beta coefficient per individual), and epsilon (errors)
   
@@ -103,15 +79,20 @@ generate_simulated_data <- function(gamma, effect, n = c(16, 16, 16)){
     gamma_vec <- rep(gamma, N)
   } else {
     gamma_vec <- rep(c(gamma, 0, 0), times = n)
-  }   
+  }  
+  
+  # Generate errors
+  if(errors == "normal"){
+    epsilon <- rnorm(N)
+  } else {
+    epsilon <- rt(N, df = 2)
+  }
   
   # Generate covariates
-  epsilon <- rbinom(N, 1, 0.5) - 0.5
-  Y0 <- rpois(N, lambda = 4) 
-  Y0[Y0 > 10] <- 10
-  Z <- rep(0:1, length.out = N)
+  Y0 <- rnorm(N)
+  Z <- do.call(c, lapply(n, function(x) rep(0:1, times = c(x*(3/4), x*(1/4)))))
   stratum_effect <- rep(beta, times = n)
-  Y1 <- generate_outcome(Y0, gamma_vec*Z, stratum_effect, epsilon)
+  Y1 <- Y0 + gamma_vec*Z + stratum_effect + epsilon
   return(data.frame(Y1, Y0, Z, gamma_vec, stratumID, stratum_effect, epsilon))
 }
 
@@ -217,14 +198,14 @@ In other words, the p-values are uniformly distributed and the power curve shoul
 Figure \ref{fig:design_null_plots} demonstrates that this is the case.
 If anything, the differenced stratified permutation test has fewer than $\alpha 100\%$ false positives when using level $\alpha$.
 
-```{r design_null, fig.height = 4}
+```{r design_null_gaussian, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 0, effect = "same effect")
+tmp <- generate_simulated_data(gamma = 0, effect = "same effect", errors = "normal")
 design0_pvalues <- replicate(1000, {
   tmp$epsilon <- rnorm(nrow(tmp))
   tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$Y1 <- generate_outcome(tmp$Y0, rep(0, nrow(tmp)), tmp$stratum_effect, tmp$epsilon)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design0_pvalues <- t(design0_pvalues)
@@ -233,12 +214,32 @@ design0_power <- apply(design0_pvalues, 2, compute_power)
 ```
 
 ```{r design_null_plots, fig.height = 4, fig.align="center"}
-plot_power_curves(design0_power, "No Effect, Balanced Design")
-
-plot_pvalue_hist(design0_pvalues, "No Effect, Balanced Design")
+plot_power_curves(design0_power, "No Effect, Normal Errors")
+ 
+plot_pvalue_hist(design0_pvalues, "No Effect, Normal Errors")
 ```
 
-## Design 1: Constant additive effect
+```{r design_null_heavy, fig.height = 4}
+set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
+
+tmp <- generate_simulated_data(gamma = 0, effect = "same effect", errors = "heavy")
+design00_pvalues <- replicate(1000, {
+  tmp$epsilon <- rt(nrow(tmp), df = 2)
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$epsilon
+  generate_simulated_pvalues(tmp)
+})
+design00_pvalues <- t(design00_pvalues)
+colnames(design00_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+design00_power <- apply(design00_pvalues, 2, compute_power)
+```
+
+```{r design_null_heavy_plots, fig.height = 4, fig.align="center"}
+plot_power_curves(design00_power, "No Effect, Heavy-tailed Errors")
+
+plot_pvalue_hist(design00_pvalues, "No Effect, Heavy-tailed Errors") 
+```
+## Design 1: Constant additive effect, normal errors
 
 There is no discernable difference in power between the ANCOVA, the differenced stratified permutation test, the LM permutations, or the Freedman-Lane test.
 However, the simple stratified permutation test of $Y_1$ has substantially less power than the other four.
@@ -247,11 +248,11 @@ Without controlling for the baseline values, the variance in $Y_1$ masks the tre
 ```{r design1, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 0.5, effect = "same effect")
-design1_pvalues <- replicate(1000, {
+tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "normal")
+design1_pvalues <- replicate(100, {
+  tmp$epsilon <- rnorm(nrow(tmp))
   tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$epsilon <- rbinom(nrow(tmp), 1, 0.5) - 0.5
-  tmp$Y1 <- generate_outcome(tmp$Y0, tmp$Z*tmp$gamma_vec, tmp$stratum_effect, tmp$epsilon)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 
@@ -261,12 +262,12 @@ design1_power <- apply(design1_pvalues, 2, compute_power)
 ```
 
 ```{r design1_plot, fig.height = 4, fig.align="center"}
-p1 <- plot_power_curves(design1_power, "Constant Additive Effect of 0.5")
-p1
-plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 0.5")
+plot_power_curves(design1_power, "Constant Additive Effect of 1, Normal Errors") 
+
+plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 1, Normal Errors")
 ```
 
-## Design 2: Single stratum effect
+## Design 2: Single stratum effect, normal errors
 
 A similar pattern emerges: the simple stratified permutation test has low power, while the other four power curves roughly coincide.
 The Freedman-Lane test may have the highest power for small p-values, but this could also just be noise.
@@ -275,11 +276,11 @@ All five power curves are closer to the line passing through the origin: since t
 ```{r design2, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 0.5, effect = "single stratum effect")
-design2_pvalues <- replicate(1000, {
+tmp <- generate_simulated_data(gamma = 1, effect = "single stratum effect", errors = "normal")
+design2_pvalues <- replicate(100, {
+  tmp$epsilon <- rnorm(nrow(tmp))
   tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$epsilon <- rbinom(nrow(tmp), 1, 0.5) - 0.5
-  tmp$Y1 <- generate_outcome(tmp$Y0, tmp$Z*tmp$gamma_vec, tmp$stratum_effect, tmp$epsilon)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design2_pvalues <- t(design2_pvalues)
@@ -288,142 +289,78 @@ design2_power <- apply(design2_pvalues, 2, compute_power)
 ```
 
 ```{r design2_plot, fig.height = 4, fig.align="center"}
-p2 <- plot_power_curves(design2_power, "Effect of 0.5 in a Single Stratum")
-p2
-plot_pvalue_hist(design2_pvalues, "Effect of 0.5 in a Single Stratum")
+plot_power_curves(design2_power, "Effect of 1 at a Single stratum, Normal Errors")
+ 
+plot_pvalue_hist(design2_pvalues, "Effect of 1, Normal Errors")
 ```
 
-## Design 3: Unpredictive baseline
+## Design 3: Constant additive effect, heavy-tailed errors
 
-Suppose that the baseline measure is not strongly predictive of the outcome.
-Then, we'd expect that controlling for baseline will not improve the power of the test, and may even make it worse.
-Suppose that in the linear data-generating process above, we have $\beta_0 = 0.25$, meaning that $Y_1$ and $Y_0$ have a correlation of $0.25$.
-
-The power curves for this design look similar to those from Design 1 with one important difference: 
-the stratified permutation test has power very close to ANCOVA and the two linear model tests,
-while the differenced permutation test has lower power.
-This suggests that one should be careful when incorporating control variables;
-naively taking the difference $Y_1 - Y_0$ does not capture the correct relationship between baseline and outcome.
-
+Again, we find that the four power curves coincide while the curve for the stratified permutation test is below the others.
+Here, the difference between the curves is not large.
+Controlling for baseline $Y_0$ does not substantially help reduce variance.
 
 ```{r design3, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 0.5, effect = "same effect")
+tmp <- generate_simulated_data(gamma = 1, effect = "same effect", errors = "heavy")
 design3_pvalues <- replicate(100, {
+  tmp$epsilon <- rt(nrow(tmp), df = 2)
   tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$epsilon <- rbinom(nrow(tmp), 1, 0.5) - 0.5
-  tmp$Y1 <- generate_outcome(0.1*tmp$Y0, tmp$Z*tmp$gamma_vec, tmp$stratum_effect, tmp$epsilon)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
-
 design3_pvalues <- t(design3_pvalues)
 colnames(design3_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design3_power <- apply(design3_pvalues, 2, compute_power)
 ```
 
 ```{r design3_plot, fig.height = 4, fig.align="center"}
-p3 <- plot_power_curves(design3_power, "Constant Additive Effect of 0.5 \n Unpredictive baseline")
-p3
-plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 0.5 \n Unpredictive baseline")
+plot_power_curves(design3_power, "Constant Additive Effect of 1, Heavy-tailed Errors")
+ 
+plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 1, Heavy-tailed Errors")
 ```
 
-# Test level: imbalanced design
+## Design 4: single stratum effect, heavy-tailed errors
 
-Suppose that instead of having 16 individuals per stratum, we distribute them unequally across strata:
-stratum 1 has 8 patients, stratum 2 has 16 patients, and stratum 3 has 24 patients.
-This imbalance does not violate any assumptions of the ANCOVA.
-However, it may reduce power if the effect is concentrated in strata with fewer patients.
-
-```{r design_null_imbalanced, fig.height = 4}
-set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
-
-tmp <- generate_simulated_data(gamma = 0, effect = "same effect", n = c(8, 16, 24))
-design00_pvalues <- replicate(1000, {
-  tmp$epsilon <- rnorm(nrow(tmp))
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$Y1 <- generate_outcome(tmp$Y0, rep(0, nrow(tmp)), tmp$stratum_effect, tmp$epsilon)
-  generate_simulated_pvalues(tmp)
-})
-design00_pvalues <- t(design00_pvalues)
-colnames(design00_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
-design00_power <- apply(design00_pvalues, 2, compute_power)
-```
-
-```{r design_null_imbalanced_plots, fig.height = 4, fig.align="center"}
-plot_power_curves(design00_power, "No Effect, Imbalanced design")
-
-plot_pvalue_hist(design00_pvalues, "No Effect, Imbalanced design")
-```
-
-# Design 4: Constant additive effect, imbalanced design
-
-The power curves here are very similar to those in Design 1.
-This result is expected, since the effect is still present among all patients who received treatment.
+The noise from the heavy-tailed errors masks the treatment effect so much that controlling for baseline measures makes no difference.
+There is almost no power to detect an effect using any of the five tests.
 
 ```{r design4, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
-tmp <- generate_simulated_data(gamma = 0.5, effect = "same effect", n = c(8, 16, 24))
-design4_pvalues <- replicate(1000, {
+tmp <- generate_simulated_data(gamma = 1, effect = "single stratum effect", errors = "heavy")
+design4_pvalues <- replicate(100, {
+  tmp$epsilon <- rt(nrow(tmp), df = 2)
   tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$epsilon <- rbinom(nrow(tmp), 1, 0.5) - 0.5
-  tmp$Y1 <- generate_outcome(tmp$Y0, tmp$Z*tmp$gamma_vec, tmp$stratum_effect, tmp$epsilon)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$gamma_vec*tmp$Z + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
-
 design4_pvalues <- t(design4_pvalues)
 colnames(design4_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design4_power <- apply(design4_pvalues, 2, compute_power)
 ```
 
 ```{r design4_plot, fig.height = 4, fig.align="center"}
-p4 <- plot_power_curves(design4_power, "Constant Additive Effect of 0.5 \n Imbalanced Design")
-p4
-plot_pvalue_hist(design4_pvalues, "Constant Additive Effect of 0.5 \n Imbalanced Design")
+plot_power_curves(design4_power, "Effect of 1 at a Single stratum, Heavy-tailed Errors")
+ 
+plot_pvalue_hist(design4_pvalues, "Effect of 1, Heavy-tailed Errors")
 ```
 
-# Design 5: Single stratum effect, imbalanced design
 
-There is very low power to detect the effect here, since in the simulated data, the stratum with only 8 patients was the only stratum with a nonzero effect of treatment.
-The treatment effect is on the same order of magnitude as the error variance.
 
-```{r design5, fig.height = 4}
-set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
-
-tmp <- generate_simulated_data(gamma = 0.5, effect = "single stratum effect", n = c(8, 16, 24))
-design5_pvalues <- replicate(100, {
-  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
-  tmp$epsilon <- rbinom(nrow(tmp), 1, 0.5) - 0.5
-  tmp$Y1 <- generate_outcome(tmp$Y0, tmp$Z*tmp$gamma_vec, tmp$stratum_effect, tmp$epsilon)
-  generate_simulated_pvalues(tmp)
-})
-design5_pvalues <- t(design5_pvalues)
-colnames(design5_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
-design5_power <- apply(design5_pvalues, 2, compute_power)
-```
-
-```{r design5_plot, fig.height = 4, fig.align="center"}
-p5 <- plot_power_curves(design5_power, "Effect of 0.5 at a Single stratum, Imbalanced Design")
-p5 
-plot_pvalue_hist(design5_pvalues, "Effect of 0.5 at a Single stratum, Imbalanced Design")
-```
-
-```{r final_summary, fig.align = "center"}
-#plots4 <- lapply(list(p1, p2, p4, p5), function(pl) pl + theme(legend.position = "none") + ggtitle(""))
-#do.call(grid.arrange, plots4)
-
-powers <- list(design1_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design1_power)), "Design" = rep("Balanced", nrow(design1_power))), 
-               design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design2_power)), "Design" = rep("Balanced", nrow(design2_power))), 
-               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design4_power)), "Design" = rep("Imbalanced", nrow(design4_power))), 
-               design5_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design5_power)), "Design" = rep("Imbalanced", nrow(design5_power))),
-               design0_power %>% as.data.frame() %>% mutate("Treatment" = rep("No Effect", nrow(design0_power)), "Design" = rep("Balanced", nrow(design0_power))),
-               design00_power %>% as.data.frame() %>% mutate("Treatment" = rep("No Effect", nrow(design00_power)), "Design" = rep("Imbalanced", nrow(design00_power))))
+```{r final_summary, fig.align = "center", fig.width = 12}
+powers <- list(design1_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design1_power)), "Errors" = rep("Gaussian", nrow(design1_power))), 
+               design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design2_power)), "Errors" = rep("Gaussian", nrow(design2_power))), 
+               design3_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design3_power)), "Errors" = rep("Heavy-tailed", nrow(design3_power))), 
+               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design4_power)), "Errors" = rep("Heavy-tailed", nrow(design4_power))),
+               design0_power %>% as.data.frame() %>% mutate("Treatment" = rep("No Effect", nrow(design0_power)), "Errors" = rep("Gaussian", nrow(design0_power))),
+              design00_power %>% as.data.frame() %>% mutate("Treatment" = rep("No Effect", nrow(design00_power)), "Errors" = rep("Heavy-tailed", nrow(design00_power))))
 
 all_power_curves <- do.call(rbind, powers)
 twobytwo <- all_power_curves %>%
   filter(Treatment != "No Effect") %>%
-  melt(id.vars = c("Treatment", "Design"))  %>% 
+  melt(id.vars = c("Treatment", "Errors")) %>% 
   mutate("pvalue" = rep((1: 100)/100, 5*4)) %>%
   mutate("Method" = variable) %>%
   ggplot(aes_string(x = "pvalue", y = "value", color = "Method")) +
@@ -431,9 +368,9 @@ twobytwo <- all_power_curves %>%
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   xlab("P-value") +
   ylab("Power") +
-  facet_wrap(Treatment~Design) +
-  ggtitle("Discrete, Skewed Data") +
-    theme(
+  facet_wrap(Treatment~Errors) +
+  ggtitle("Gaussian Data, Imbalanced Treatment Groups") +
+  theme(
     axis.text.x = element_text(size = 12),
     axis.text.y = element_text(size = 12),
     axis.title = element_text(size = 16),
@@ -444,20 +381,21 @@ twobytwo <- all_power_curves %>%
     legend.position = "bottom"
   ) + 
   guides(color=guide_legend(nrow=2,byrow=TRUE))
+twobytwo
 
-twobytwo 
-
-pdf(file = "../ms/fig/skewed_simulation_power.pdf", width = 8)
+pdf(file = "../ms/fig/imbalanced_simulation_power.pdf", width = 8)
 twobytwo
 dev.off()
 ```
 
+
 ```{r power_summary_tab, results = "asis"}
 summary05 <- t(sapply(powers, function(x) x[5, c(6, 7, 1:5)]))
 summary05 <- summary05[c(5, 1, 2, 6, 3, 4), ]
-summarytab <- xtable(summary05, digits = 3, align = "rp{1.25in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
-       caption = "Empirical power at level $0.05$ for discrete, skewed simulated data",
-       label = "tab:skewed_power")
-print(summarytab, hline.after = c(-1, 0, 3, nrow(summarytab)), type="latex", file="../ms/fig/skewed_simulation_power_summary.tex") 
+summarytab <- xtable(summary05, digits = 3, align = "p{1.25in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
+       caption = "Empirical power at level $0.05$ for Gaussian simulated data with imbalanced treatment groups",
+       label = "tab:imbalanced_power",
+       hline.after = c(-1, 0, 3)) 
+print(summarytab, hline.after = c(-1, 0, 3, nrow(summarytab)), type="latex", file="../ms/fig/imbalanced_simulation_power_summary.tex")
 summarytab 
 ```

@@ -1,5 +1,5 @@
 ---
-title: "ANOVA Comparison Simulations: Gaussian Data"
+title: "ANCOVA Comparison Simulations: Gaussian Data"
 author: "Kellie Ottoboni"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -42,13 +42,13 @@ We use two designs:
 * Design 2: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in stratums 2 and 3. This is a simplistic case of heterogeneous treatment effects.
 
 With these two designs, we vary the distribution of $\varepsilon$.
-In the first case, we use $\varepsilon \sim N(0, 1)$ to mimic the usual ANOVA assumptions.
+In the first case, we use $\varepsilon \sim N(0, 1)$ to mimic the usual ANCOVA assumptions.
 In the second case, $\varepsilon \sim t(2)$ so the errors are heavy-tailed.
 Thus, there are four total simulation designs.
 
 We compare five tests:
 
-* ANOVA: we fit a linear model of response $Y_1$ on baseline $Y_0$, treatment $Z$, and a dummy for stratum.
+* ANCOVA: we fit a linear model of response $Y_1$ on baseline $Y_0$, treatment $Z$, and a dummy for stratum.
 * Stratified permutation: we permute treatment assignment within stratum, then take the difference in means between treated and control outcomes $Y_1$
 * Differenced permutation: we do the same permutation procedure as the stratified permutation test, except we use the difference between outcome and baseline, $Y_1 - Y_0$
 * Linear model (LM) permutation: we use the same stratified permutation procedure as above, except use the $t$-statistic for the coefficient on treatment in the linear regression of $Y_1$ on $Y_0$, $Z$, and stratum dummies
@@ -100,12 +100,12 @@ generate_simulated_pvalues <- function(dataset, reps = 1e3){
   # Inputs:
   # dataset = a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), and stratumID (stratum)
   # Returns: a vector of p-values
-  # first element is the p-value from the ANOVA
+  # first element is the p-value from the ANCOVA
   # second element is the p-value from the stratified two-sample permutation test
   # third element is the p-value from the linear model test, permuting treatment
   # fourth element is the p-value from the Freedman-Lane linear model test, permuting residuals
   
-  # ANOVA
+  # ANCOVA
   modelfit <- lm(Y1 ~ Y0 + Z + factor(stratumID), data = dataset)
   resanova <- summary(aov(modelfit))
   anova_pvalue <- resanova[[1]]["Z", "Pr(>F)"]
@@ -142,7 +142,7 @@ generate_simulated_pvalues <- function(dataset, reps = 1e3){
   })
   fl_pvalue <- t2p(observed_t1, lm2_t_distr, alternative = "two-sided")
   
-  return(c("ANOVA" = anova_pvalue, 
+  return(c("ANCOVA" = anova_pvalue, 
            "Stratified Permutation" = perm_pvalue, 
            "Differenced Permutation" = perm_pvalue2,
            "LM Permutation" = lm_pvalue, 
@@ -179,8 +179,8 @@ plot_pvalue_hist <- function(pvalue_mat, title){
 plot_pvalue_scatter <- function(pvalue_mat, title){
   pvalue_mat %>%
   as.data.frame() %>%
-  select(ANOVA, strat = starts_with("Stratified")) %>%
-  ggplot(aes(x = ANOVA, y = strat)) + 
+  select(ANCOVA, strat = starts_with("Stratified")) %>%
+  ggplot(aes(x = ANCOVA, y = strat)) + 
   geom_point() +
   xlim(0, 1) + ylim(0, 1) +
   ylab("Stratified Permutation") +
@@ -198,30 +198,51 @@ In other words, the p-values are uniformly distributed and the power curve shoul
 Figure \ref{fig:design_null_plots} demonstrates that this is the case.
 If anything, the differenced stratified permutation test has fewer than $\alpha 100\%$ false positives when using level $\alpha$.
 
-```{r design_null, fig.height = 4}
+```{r design_null_gaussian, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
 
 tmp <- generate_simulated_data(gamma = 0, effect = "same effect", errors = "normal")
-design0_pvalues <- replicate(100, {
+design0_pvalues <- replicate(1000, {
   tmp$epsilon <- rnorm(nrow(tmp))
   tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
   tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$epsilon
   generate_simulated_pvalues(tmp)
 })
 design0_pvalues <- t(design0_pvalues)
-colnames(design0_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design0_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design0_power <- apply(design0_pvalues, 2, compute_power)
 ```
 
 ```{r design_null_plots, fig.height = 4, fig.align="center"}
 plot_power_curves(design0_power, "No Effect, Normal Errors")
-
+ 
 plot_pvalue_hist(design0_pvalues, "No Effect, Normal Errors")
+```
+
+```{r design_null_heavy, fig.height = 4}
+set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
+
+tmp <- generate_simulated_data(gamma = 0, effect = "same effect", errors = "heavy")
+design00_pvalues <- replicate(1000, {
+  tmp$epsilon <- rt(nrow(tmp), df = 2)
+  tmp$Z <- permute_within_groups(tmp$Z, tmp$stratumID)
+  tmp$Y1 <- tmp$Y0 + tmp$stratum_effect + tmp$epsilon
+  generate_simulated_pvalues(tmp)
+})
+design00_pvalues <- t(design00_pvalues)
+colnames(design00_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+design00_power <- apply(design00_pvalues, 2, compute_power)
+```
+
+```{r design_null_heavy_plots, fig.height = 4, fig.align="center"}
+plot_power_curves(design00_power, "No Effect, Heavy-tailed Errors")
+
+plot_pvalue_hist(design00_pvalues, "No Effect, Heavy-tailed Errors") 
 ```
 
 ## Design 1: Constant additive effect, normal errors
 
-There is no discernable difference in power between the ANOVA, the differenced stratified permutation test, the LM permutations, or the Freedman-Lane test.
+There is no discernable difference in power between the ANCOVA, the differenced stratified permutation test, the LM permutations, or the Freedman-Lane test.
 However, the simple stratified permutation test of $Y_1$ has substantially less power than the other four.
 Without controlling for the baseline values, the variance in $Y_1$ masks the treatment effect.
 
@@ -237,7 +258,7 @@ design1_pvalues <- replicate(1000, {
 })
 
 design1_pvalues <- t(design1_pvalues)
-colnames(design1_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design1_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design1_power <- apply(design1_pvalues, 2, compute_power)
 ```
 
@@ -264,7 +285,7 @@ design2_pvalues <- replicate(1000, {
   generate_simulated_pvalues(tmp)
 })
 design2_pvalues <- t(design2_pvalues)
-colnames(design2_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design2_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design2_power <- apply(design2_pvalues, 2, compute_power)
 ```
 
@@ -291,7 +312,7 @@ design3_pvalues <- replicate(1000, {
   generate_simulated_pvalues(tmp)
 })
 design3_pvalues <- t(design3_pvalues)
-colnames(design3_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design3_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design3_power <- apply(design3_pvalues, 2, compute_power)
 ```
 
@@ -317,7 +338,7 @@ design4_pvalues <- replicate(1000, {
   generate_simulated_pvalues(tmp)
 })
 design4_pvalues <- t(design4_pvalues)
-colnames(design4_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design4_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design4_power <- apply(design4_pvalues, 2, compute_power)
 ```
 
@@ -335,7 +356,7 @@ Then, we'd expect that controlling for baseline will not improve the power of th
 Suppose that in the linear data-generating process above, we have $\beta_0 = 0.25$, meaning that $Y_1$ and $Y_0$ have a correlation of $0.25$.
 
 The power curves for this design look similar to those from Design 1 with one important difference: 
-the stratified permutation test has power very close to ANOVA and the two linear model tests,
+the stratified permutation test has power very close to ANCOVA and the two linear model tests,
 while the differenced permutation test has lower power.
 This suggests that one should be careful when incorporating control variables;
 naively taking the difference $Y_1 - Y_0$ does not capture the correct relationship between baseline and outcome.
@@ -353,7 +374,7 @@ design5_pvalues <- replicate(100, {
 })
 
 design5_pvalues <- t(design5_pvalues)
-colnames(design5_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design5_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design5_power <- apply(design5_pvalues, 2, compute_power)
 ```
 
@@ -368,7 +389,7 @@ plot_pvalue_hist(design5_pvalues, "Constant Additive Effect of 1, Normal Errors 
 
 Suppose that instead of having 16 individuals per stratum, we distribute them unequally across strata:
 stratum 1 has 8 patients, stratum 2 has 16 patients, and stratum 3 has 24 patients.
-This imbalance does not violate any assumptions of the ANOVA.
+This imbalance does not violate any assumptions of the ANCOVA.
 However, it may reduce power if the effect is concentrated in strata with fewer patients.
 
 ## Design 6: Constant additive effect, normal errors
@@ -388,7 +409,7 @@ design6_pvalues <- replicate(100, {
 })
 
 design6_pvalues <- t(design6_pvalues)
-colnames(design6_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design6_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design6_power <- apply(design6_pvalues, 2, compute_power)
 ```
 
@@ -414,7 +435,7 @@ design7_pvalues <- replicate(100, {
   generate_simulated_pvalues(tmp)
 })
 design7_pvalues <- t(design7_pvalues)
-colnames(design7_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design7_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design7_power <- apply(design7_pvalues, 2, compute_power)
 ```
 
@@ -426,7 +447,7 @@ plot_pvalue_hist(design7_pvalues, "Effect of 1, Normal Errors")
 
 # Heteroskedastic errors
 
-One assumption of ANOVA is that errors are homoskedastic: they have the same variance across groups.
+One assumption of ANCOVA is that errors are homoskedastic: they have the same variance across groups.
 Suppose that this does not hold in our data.
 Imagine we have three strata with 16 patients each, but they have different error distributions:
 stratum 1 has standard normal errors,
@@ -450,7 +471,7 @@ design8_pvalues <- replicate(100, {
 })
 
 design8_pvalues <- t(design8_pvalues)
-colnames(design8_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design8_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design8_power <- apply(design8_pvalues, 2, compute_power)
 ```
 
@@ -477,7 +498,7 @@ design9_pvalues <- replicate(100, {
   generate_simulated_pvalues(tmp)
 })
 design9_pvalues <- t(design9_pvalues)
-colnames(design9_pvalues) <- c("ANOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+colnames(design9_pvalues) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
 design9_power <- apply(design9_pvalues, 2, compute_power)
 ```
 
@@ -490,16 +511,18 @@ plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 
 
 ```{r final_summary, fig.align = "center", fig.width = 12}
-#plots4 <- lapply(list(p1, p2, p4, p5), function(pl) pl + theme(legend.position = "none") + ggtitle(""))
-#do.call(grid.arrange, plots4)
-
 powers <- list(design1_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design1_power)), "Errors" = rep("Gaussian", nrow(design1_power))), 
                design2_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design2_power)), "Errors" = rep("Gaussian", nrow(design2_power))), 
                design3_power %>% as.data.frame() %>% mutate("Treatment" = rep("Constant Additive Effect", nrow(design3_power)), "Errors" = rep("Heavy-tailed", nrow(design3_power))), 
-               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design4_power)), "Errors" = rep("Heavy-tailed", nrow(design4_power))))
+               design4_power %>% as.data.frame() %>% mutate("Treatment" = rep("Single Stratum Effect", nrow(design4_power)), "Errors" = rep("Heavy-tailed", nrow(design4_power))),
+               design0_power %>% as.data.frame() %>% mutate("Treatment" = rep("No Effect", nrow(design0_power)), "Errors" = rep("Gaussian", nrow(design0_power))),
+              design00_power %>% as.data.frame() %>% mutate("Treatment" = rep("No Effect", nrow(design00_power)), "Errors" = rep("Heavy-tailed", nrow(design00_power))))
+
 
 all_power_curves <- do.call(rbind, powers)
-twobytwo <- melt(all_power_curves, id.vars = c("Treatment", "Errors")) %>% 
+twobytwo <- all_power_curves %>%
+  filter(Treatment != "No Effect") %>%
+  melt(id.vars = c("Treatment", "Errors")) %>% 
   mutate("pvalue" = rep((1: 100)/100, 5*4)) %>%
   mutate("Method" = variable) %>%
   ggplot(aes_string(x = "pvalue", y = "value", color = "Method")) +
@@ -531,9 +554,10 @@ dev.off()
 
 ```{r power_summary_tab, results = "asis"}
 summary05 <- t(sapply(powers, function(x) x[5, c(6, 7, 1:5)]))
-summarytab <- xtable(summary05, align = "rp{1.15in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
+summary05 <- summary05[c(5, 1, 2, 6, 3, 4), ]
+summarytab <- xtable(summary05, digits = 3, align = "rp{1.15in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
        caption = "Empirical power at level $0.05$ for Gaussian simulated data",
        label = "tab:normal_power") 
-print(summarytab, type="latex", file="../ms/fig/normal_simulation_power_summary.tex")
+print(summarytab, hline.after = c(-1, 0, 3, nrow(summarytab)), type="latex", file="../ms/fig/normal_simulation_power_summary.tex")
 summarytab
 ```

@@ -127,9 +127,9 @@ Thus, if we believe the linear model is correctly specified, a hypothesis test f
 However, the assumptions necessary for the coefficient to be $t$ distributed are clearly violated in many cases:
 when the data are discrete or ordinal, when the treatment has a differential effect across strata, and when measurement error sizes differ across strata.
 Furthermore, the hypothesis test implicitly assumes that the data were sampled at random from some underlying population, when in fact,
-recruitment of patients to medical experiments is rarely done this way \todo{cite}.
+medical experimenters rarely recruit patients this way.
 
-An alternative approach is permutation testing. \todo{citations: fisher 1935, pitman 1937 and 1938}
+Permutation testing is an alternate approach (\cite{fisher_design_1935, pitman_significance_1937,pitman_significance_1938}).
 Deliberate randomization induces a distribution for any test statistic under the null hypothesis that treatment has no effect on the outcome:
 the randomization scheme provides information about all possible ways that treatment may have been assigned 
 and the null hypothesis tells us what each individual's response would be regardless of the assignment (namely, it would be the same).
@@ -189,13 +189,16 @@ Instead of estimation, we will focus on hypothesis testing for whether these dif
 
 The model is
 
-$$Y_{ij} = \alpha_j + \beta X_{ij} + \gamma Z_{ij} + \eps_{ij}$$
+\begin{equation}
+Y_{ij} = \alpha_j + \beta X_{ij} + \gamma Z_{ij} + \eps_{ij}
+\end{equation}
 
 \noindent where $\alpha_j$ is a fixed effect for stratum $j$, $\beta$ is the coefficient for the pretreatment covariate,
 $\gamma$ is the coefficient for treatment,
 and $\eps_{ij}$ is an error term.
-The parameter of interest is $\gamma$, which represents the average treatment effect in the sample. 
-If we believe the linear model is correctly specified, it asserts that for each individual, $Y(1) = Y(0) + \gamma$.
+The parameter of interest is $\gamma$. 
+If we believe the linear model is the true data-generating process, it asserts that for each individual, $Y(1) = Y(0) + \gamma$.
+However, we needn't take this perspective for $\gamma$ to be a useful quantity; it represents the average treatment effect, holding the other variables fixed.
 We would like to test the null hypothesis $H_0: \gamma = 0$ against
 the two-sided alternative hypothesis $H_1: \gamma \neq 0$.
 
@@ -322,9 +325,10 @@ Others have developed approximate permutation tests which use linear regression 
 \section{Results}
 \subsection{Simulations}
 
-To compare the performance of these tests, we simulated data coming from a randomized experiment, applied the tests to the data, and compared their empirical power over repeated random treatment assignments and random errors.
+To compare the performance of these tests, we simulated data coming from a randomized experiment, using several different data-generating processes.
+We applied the tests to the data and compared their empirical power over repeated random treatment assignments and random errors.
 We compared the following five tests:
-the $t$-statistic from the parametric ANOVA,
+the $t$-statistic from the parametric ANCOVA,
 a stratified permutation test using the difference in mean outcomes\footnote{ We considered using the difference in means within each stratum, aggregated by taking the sum of their absolute values over stratum. However this would not be ideal for imbalanced designs, which are common in real-world applications, so we did not consider it in the simulations.  See the data analysis for details.}
  (called ``stratified permutation'' in what follows),
 a stratified permutation test difference mean differences, taken by subtracting the baseline measure from the outcome (called ``differenced permutation'' in what follows),
@@ -334,11 +338,13 @@ and the Freedman-Lane permutation test.
 
 We assume the following linear data-generating process:
 
-$$Y_{ij1} =\beta_0Y_{ij0} + \beta_{j} + \gamma_j Z_{ij} + \varepsilon_{ij}$$
+\begin{equation}\label{eqn:dgp}
+Y_{ij1} =\alpha_j + \beta_0Y_{ij0} + \gamma_j Z_{ij} + \varepsilon_{ij}
+\end{equation}
 
-for individuals $i = 1, \dots, n_j$, $j = 1, 2, 3$.
+\noindent for individuals $i = 1, \dots, n_j$, $j = 1, 2, 3$.
+$\alpha_j$ is the mean effect of being in stratum $j$, 
 $\beta_0$ is the coefficient for the baseline measurement $Y_{ij0}$, 
-$\beta_j$ is the mean effect of being in stratum $j$, 
 $Z_{ij}$ is the treatment level, 
 $\gamma_j$ is the effect of treatment in stratum $j$, 
 and $\varepsilon_{ij}$ is an error term.
@@ -348,31 +354,33 @@ Assume that there are $n_j = 16$ individuals per stratum and treatment assignmen
 We use two designs:
 \begin{itemize}
 \item Constant additive treatment effect: $\gamma_1 = \gamma_2 = \gamma_3 = \gamma$. This is the implicit assumption when doing inference on estimated treatment effects.
-\item Treatment effect in a single stratum: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in strata 2 and 3. This is a simplistic case of heterogeneous treatment effects.
+\item Treatment effect in a single stratum: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in strata 2 and 3. This is a simplistic case of heterogeneous treatment effects. The standard ANCOVA model does not account for this scenario.
 \end{itemize}
 
-We draw the baseline measurements once and condition on observing $\{ Y_{ij0}\}_{i = 1,\dots,16, j = 1,\dots, 3}$.
-Then, for a large number of trials, we randomly assign treatment within strata, generate errors, and construct new outcomes $Y_{ij1}$.
+\noindent We draw the baseline measurements once, treating them as fixed, and condition on observing $\{ Y_{ij0} : {i = 1,\dots,16, j = 1,\dots, 3}\}$.
+Then, for 1000 trials, we randomly assign treatment to half of the individuals within each stratum, generate random errors, and construct new outcomes $Y_{ij1}$ using Equation~\ref{eqn:dgp}.
 We conduct all five tests on this new data, obtaining a two-sided p-value for each.
 The power curves are estimated by computing the proportion of observed p-values less than or equal to $\alpha$, for $\alpha = 0.01, 0.02, \dots, 1$.
 
 In our first set of simulations, we assume that the baseline measurements $Y_{ij0}$ are standard normally distributed and the pairs $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
-We will assume that $\beta_0 = 1$.
+We will assume that $\beta_0 = 1$ and let the treatment effect be $\gamma = 1$
 For each of the two simulation designs that vary the treatment effect, we use two distributions of $\varepsilon$.
 In the first case, we use $\varepsilon \sim N(0, 1)$ to fit with the parametric ANOVA assumption of normal errors.
 In the second case, $\varepsilon$ comes from a $t$ distribution with 2 degrees of freedom so the errors are heavy-tailed.
 Thus, there are four total simulation designs.
 
-Figure~\ref{fig:normal_sim_power} shows the estimated power curves in these four designs using a treatment effect of $\gamma = 1$.
+Figure~\ref{fig:normal_sim_power} shows the estimated power curves in these four designs.
 The best case is when the errors are Gaussian and the treatment effect is constant across strata, while the worst case is when the errors are heavy-tailed and the treatment effect only appears in one stratum.
-\todo{it makes sense that this happens as assumptions are broken in other cases}
+Intuitively, it makes sense that power decreases relative to the Gaussian, constant treatment effect case, as we increasingly obscure the treatment effect by modifying the design.
 A consistent pattern appears in each case: the stratified permutation test has the lowest power, while the other four tests tend to have very similar power.
-Table~\ref{tab:normal_power} displays the value of these power curves at level $0.05$.
+
+Table~\ref{tab:normal_power} displays the size of the test and the power at level $0.05$.
+The three tests based on linear models have slightly higher than nominal level, though the margin is within two standard errors of $0.05$.\footnote{
+The number of tests rejected under the null in 1000 trials has a binomial distribution.
+If the true level is $0.05$, then the standard error is $\sqrt{0.05 \times 0.95/1000}$.}
 These numbers show that actually, for $\alpha=0.05$, the discrepancy between the stratified permutation test and the others is not so large when the effect is isolated in a single stratum.
-In this case, the permutation test may have more power than the parametric ANOVA at significance levels that are used in practice.
-
-
-\begin{figure}
+In this case, the permutation test may have slightly higher power than the parametric ANCOVA at small significance levels like those used in practice.
+\begin{figure}[h]
 \centering
 \includegraphics[width = \textwidth]{fig/normal_simulation_power}
 \caption{Empirical power curves for the Gaussian simulated data}
@@ -382,12 +390,33 @@ In this case, the permutation test may have more power than the parametric ANOVA
 \input{fig/normal_simulation_power_summary.tex}
 \end{center}
 
-In our second set of simulations, we assume that the baseline measurements $Y_{ij0}$ are discrete and skewed.
+In our second set of simulations, we used the same design as the first simulations, but modified the sizes of the treatment groups.
+Within each stratum, 4 individuals received one treatment and 12 received the second treatment.
+This mimics real-world experiments, where the more expensive treatment is administered less frequently than the other.
+It is well-known that both parametric and nonparametric tests have higher than nominal level when there is heterogeneous variance, and this effect is exaccerbated when group sizes are unequal (\cite{glass_consequences_1972}, \cite{zimmerman_two_2006}).
+Here, the data have the same variance, so the test size should not be a problem, but power may suffer.\footnote{
+See the supplementary simulation files for a treatment of heterogeneous variances.}
+We omit a plot of the power curves from these simulations, as the patterns appear similar to those in Figure~\ref{fig:normal_sim_power}.
+Table~\ref{tab:imbalanced_power} displays the value of these power curves and the size of the test at level $0.05$.
+In this case, the permutation tests (except for the simple stratified permutation) have slightly higher power than the ANCOVA, but the difference is not substantial.
+%\begin{figure}
+%\centering
+%\includegraphics[width = \textwidth]{fig/imbalanced_simulation_power}
+%\caption{Empirical power curves for the Gaussian simulated data with imbalanced group sizes}
+%\label{fig:imbalanced_sim_power}
+%\end{figure}
+\begin{center}
+\input{fig/imbalanced_simulation_power_summary.tex}
+\end{center}
+
+
+
+In our third set of simulations, we assume that the baseline measurements $Y_{ij0}$ are discrete and skewed.
 This is representative of some survey data, where individuals are asked to rate their experience on a scale from 1 to 10, for instance.
-Here, we generate the baseline measures using independent draws from a Poisson distribution with mean 4, and censoring values larger than 10, instead setting them to 10.
-We condition on these observed baseline measures once we have generated them once.
-Then, for each of the large number of trials, we randomly assign treatment within strata and generate errors taking on values $0.5$ and $-0.5$ with equal probability.
-We construct $Y_{ij1}$ using the linear equation above.
+We generate the baseline measures using independent draws from a Poisson distribution with mean 4, and censoring values larger than 10, instead setting them to 10.
+We condition on these observed baseline measures after we have generated them once.
+Then, for each 1000 trials, we randomly assign treatment to half of the individuals in each stratum and generate errors taking on values $0.5$ and $-0.5$ with equal probability.
+We construct $Y_{ij1}$ using Equation~\ref{eqn:dgp} with a treatment effect of $\gamma = 0.5$.
 However we don't observe $Y_{ij1}$ but instead $\tilde{Y}_{ij1}$, which is defined as 
 
 \begin{displaymath}
@@ -400,24 +429,26 @@ However we don't observe $Y_{ij1}$ but instead $\tilde{Y}_{ij1}$, which is defin
    \right.
 \end{displaymath}
 
-The observed outcomes $\tilde{Y}_{ij1}$ that we test are also discrete.
+The observed outcomes $\tilde{Y}_{ij1}$, the baseline measures $Y_{ij0}$, and the errors are discrete.
 The assumption of normality is clearly violated here.
 
-In these simulations, we examine the effect of sample size.
-First, we consider balanced samples, where each stratum contains 16 individuals, 8 of whom receive one treatment and the other 8 of whom receive the other.
-Next, we consider imbalanced samples, where the smallest stratum has only 8 individuals, the next has 16, and the largest has 24.
+We examine the effect of stratum size, rather than error distribution, in this set of simulations.
+First, we consider balanced samples as before, where each stratum contains 16 individuals.
+Next, we consider imbalanced strata, where the smallest stratum has only 8 individuals, the next has 16, and the largest has 24.
 We again consider the four combinations of treatment effects and sample sizes.
 In the case where there is only a non-null treatment effect in one stratum and sample sizes are different, this effect occurs in the smallest stratum.
 
-Figure~\ref{fig:skewed_sim_power} shows the estimated power curves in these four designs using a treatment effect of $\gamma = 0.5$.
+Figure~\ref{fig:skewed_sim_power} shows the estimated power curves in these four designs.
 When the treatment effect is constant, sample sizes within each stratum don't matter; the power curves look the same up to chance variation.
-When the treatment effect only occurs in one stratum, there is a substantial loss in power due to halving the number of individuals in the stratum where the effect is present.
+When the treatment effect only occurs in one stratum, there is a substantial loss in power because the effect only appears in the smallest stratum.
 In practice, one does not usually know a priori which individuals will be affected by treatment (otherwise, those unaffected by treatment would be excluded from the study altogether),
-so this result suggests using caution when stratifying.
+This result suggests that when stratifying, one must be cautious not to stratify too finely, otherwise treatment effects may be indistinguishable from random variability.
+
 As in the first set of simulations, the stratified permutation test using the raw outcomes has the lowest power of the five tests.
 Now, however, the stratified permutation test using the difference between outcome and baseline also has lower power than the three using linear models.
-Presumably, this is because the differences are also discrete and lie in a small range of values, so the test statistic does not vary greatly across permutations.
+Presumably, this is because the differences $\tilde{Y}_{ij1} - Y_{ij0}$ are also discrete and lie in a small range of values, so the test statistic does not vary greatly across permutations.
 Table~\ref{tab:skewed_power} confirms this: power for the three linear model methods is high when the treatment is constant across strata, and power for all of the methods suffers when the effect is isolated in a single stratum.
+All of the tests have lower than nominal level.
 
 
 \begin{figure}
@@ -432,9 +463,9 @@ Table~\ref{tab:skewed_power} confirms this: power for the three linear model met
 \end{center}
 
 It makes sense that in all of these simulations, the permutation test using the difference in outcome and baseline as the response measure is more powerful than the permutation test using the raw outcomes.
-In additional simulations\footnote{see supplementary files on GitHub}, we changed the Gaussian model so that the outcome and baseline had correlation of $0.25$.
+In additional simulations\footnote{see supplementary files on GitHub}, we modified the data-generating process given by Equation~\ref{eqn:dgp} so that the outcome and baseline had correlation of $0.25$.
 In this case, the result was reversed: the differenced test had low power while the test using the raw outcomes had a power curve closer to the tests that adjust for covariates using a linear model.
-This phenomenon has been studied before \todo{cite}, and it is recommended to use the difference in outcome and baseline only when their correlation is larger than $0.5$ (\cite{frison_repeated_1992}).
+This phenomenon has been studied before by \citet{frison_repeated_1992}, who recommended to use the difference in outcome and baseline if their correlation is greater than $0.5$ and to use the outcome only if their correlation is less than $0.5$.
 
 
 
@@ -465,6 +496,7 @@ Our results match those of \citet{vickers_parametric_2005}, where he found that 
 \item Results about differenced vs raw outcomes. This isn't new but our simulations and empirical dataset confirm it in the context of permutation tests
 \item In an ideal case, one knows all covariates related to the outcome and fits a fully saturated linear model (including all covariates and their interactions), the coefficient for the treatment is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
 \item Permutation tests don't come free of assumptions, though.  \citet{romano_behavior_1990} warns against using permutation tests naively, if items are not truly exchangeable. For instance, he points to the case where observations have unequal variances.  \citet{boik_fisherpitman_1987} illustrates this phenomenon, comparing the normal theory $F$ test to its permutation counterpart and demonstrating by simulation that the latter has larger than nominal level.
+\item \citet{gail_tests_1988} propose a randomization test based on residuals, using not a linear model but an exponential family model to construct residuals, and find that omitting relevant covariates leads to tests with higher than nominal level.  \todo{perhaps this is something that one should be mindful of when using these linear model based tests.}
 \eit
 
 
