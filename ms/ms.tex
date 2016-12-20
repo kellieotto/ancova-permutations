@@ -1,14 +1,28 @@
 \documentclass[11pt]{article}
+
+
+%\documentclass{bmcart}
+
+%%% Load packages
+%\usepackage{amsthm,amsmath}
+%\RequirePackage{natbib}
+%\RequirePackage[authoryear]{natbib}% uncomment this for author-year bibliography
+%\RequirePackage{hyperref}
+\usepackage[utf8]{inputenc} %unicode support
+
 \usepackage[breaklinks=true]{hyperref}
 \usepackage{color}
 \usepackage{amsmath,amssymb,amsthm}
-\usepackage{natbib}
+\usepackage[numbers]{natbib}
 \usepackage{array}
-\usepackage{booktabs, multicol, multirow}
+%\usepackage{booktabs, multicol, multirow}
 \usepackage[nohead, margin=1in]{geometry}
-\usepackage[singlespacing]{setspace}
+%\usepackage[singlespacing]{setspace}
 \usepackage{graphicx}
 
+
+%%% Put your definitions there:
+%\startlocaldefs
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -40,7 +54,53 @@
 \newcommand{\argmin}{\textrm{argmin}}
 \renewcommand{\baselinestretch}{1.5}
 
+%\endlocaldefs
+
+
+\newcommand{\parttitle}[1]{\textbf{#1}}
+
+
+%%% Begin ...
+\begin{document}
+
+%%% Start of article front matter
+%\begin{frontmatter}
+
+%\begin{fmbox}
+%\dochead{Research}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% Enter the title of your article here     %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \title{A Comparison of Parametric and Permutation Tests for Regression Analysis of Randomized Control Trials}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% Enter the authors here                   %%
+%%                                          %%
+%% Specify information, if available,       %%
+%% in the form:                             %%
+%%   <key>={<id1>,<id2>}                    %%
+%%   <key>=                                 %%
+%% Comment or delete the keys which are     %%
+%% not used. Repeat \author command as much %%
+%% as required.                             %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\author[
+%   addressref={aff1},                   % id's of addresses, e.g. {aff1,aff2}
+%   corref={aff1},                       % id of corresponding address, if any
+%   noteref={n1},                        % id's of article notes, if any
+%   email={jane.e.doe@cambridge.co.uk}   % email address
+%]{\inits{JE}\fnm{Jane E} \snm{Doe}}
+%\author[
+%   addressref={aff1,aff2},
+%   email={john.RS.Smith@cambridge.co.uk}
+%]{\inits{JRS}\fnm{John RS} \snm{Smith}}
+
 \author{Kellie Ottoboni \\
 Department of Statistics; Berkeley Institute for Data Science\\
 University of California, Berkeley\\ [.2in]
@@ -50,42 +110,118 @@ University of Padova \\ [.2in]
 Fraser Lewis \\
 RB
 }\date{Draft \today}
-\begin{document}
 \maketitle
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% Enter the authors' addresses here        %%
+%%                                          %%
+%% Repeat \address commands as much as      %%
+%% required.                                %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+%\address[id=aff1]{%                           % unique id
+%  \orgname{Department of Zoology, Cambridge}, % university, etc
+%  \street{Waterloo Road},                     %
+%  %\postcode{}                                % post or zip code
+%  \city{London},                              % city
+%  \cny{UK}                                    % country
+%}
+%\address[id=aff2]{%
+%  \orgname{Marine Ecology Department, Institute of Marine Sciences Kiel},
+%  \street{D\"{u}sternbrooker Weg 20},
+%  \postcode{24105}
+%  \city{Kiel},
+%  \cny{Germany}
+%}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% Enter short notes here                   %%
+%%                                          %%
+%% Short notes will be after addresses      %%
+%% on first page.                           %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\begin{artnotes}
+%%\note{Sample of title note}     % note to the article
+%\note[id=n1]{Equal contributor} % note, connected to author
+%\end{artnotes}
+%
+%\end{fmbox}% comment this for two column layout
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% The Abstract begins here                 %%
+%%                                          %%
+%% Please refer to the Instructions for     %%
+%% authors on http://www.biomedcentral.com  %%
+%% and include the section headings         %%
+%% accordingly for your article type.       %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{abstractbox}
+
 
 \begin{abstract}
-\noindent\textbf{Background:}
+\parttitle{Background}
 In clinical trials, the standard method of measuring the effectiveness of one treatment over another is a parametric analysis of covariance (ANCOVA), a special case of linear regression which incorporates stratification.
 The method relies on strong, untestable assumptions about the data-generating process such as constant treatment effects across groups, normality of errors, and homoskedasticity.
-The effectiveness of the treatment is decided by the p-value from this hypothesis test, which may not be valid if the assumptions for ANCOVA are not met.
+The effectiveness of the treatment is decided by the $p$-value from this hypothesis test, which may not be valid if the assumptions for ANCOVA are not met.
 We would like to understand which assumptions may be relaxed or violated for the ANCOVA to remain valid (but potentially less powerful).
 
-\noindent\textbf{Methods:}
+\parttitle{Methods}
 Permutation tests present such an opportunity: they require only minimal assumptions which are often guaranteed by the randomization that was conducted.
 In contrast to parametric tests, which rely up on strong assumptions to obtain a null distribution with a simple closed form, with permutation tests one uses the assumption of exchangeability or randomization to construct approximate null distributions by simulation.
 These tests are exact, even in finite samples.
 We compare ANCOVA to several permutation tests based on linear models, all of which control for pretreatment covariates to increase power and precision.
 
-\noindent\textbf{Results:}
+\parttitle{Results}
 Our simulations show that the permutation methods maintain power comparable to the ANCOVA in randomized trials.
 We illustrate the use of permutation tests alongside the parametric ANCOVA using data from a clinical trial conducted across eight sites,
 each having a different numbers of patients.
 
-\noindent\textbf{Conclusions:}
+\parttitle{Conclusions}
 These results suggest that the parametric ANCOVA and linear model permutation tests perform similarly, even when not all assumptions for the parametric test are met.
 
 
 \end{abstract}
 
-% keywords: permutation test, linear model, ANOVA
-\newpage
 
-\section{Background}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% The keywords begin here                  %%
+%%                                          %%
+%% Put each keyword in separate \kwd{}.     %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{keyword}
+%\kwd{permutation test}
+%\kwd{linear model}
+%\kwd{ANCOVA}
+%\end{keyword}
+
+% MSC classifications codes, if any
+%\begin{keyword}[class=AMS]
+%\kwd[Primary ]{}
+%\kwd{}
+%\kwd[; secondary ]{}
+%\end{keyword}
+%
+%\end{abstractbox}
+%%
+%%\end{fmbox}% uncomment this for twcolumn layout
+%
+%\end{frontmatter}
+
+
+\section*{Background}
 A hypothesis test is a statistical method for determining whether observed data is consistent with a belief about the process that generated the data.
 Medical experiments use hypothesis testing to assess the evidence that a treatment has an effect on one or more clinically relevant outcomes.
-The simplest version of this experiment, which involves randomly assigning two treatments to a fixed number of individuals in a group and measuring a single outcome, has been studied for nearly a century (see \citet{fisher_design_1935} and \citet{neyman_application_1923} for early references).
+The simplest version of this experiment, which involves randomly assigning two treatments to a fixed number of individuals in a group and measuring a single outcome, has been studied for nearly a century (see \cite{fisher_design_1935} and \cite{neyman_application_1923} for early references).
 One can conduct hypothesis tests and construct confidence intervals for the estimated treatment effect
 by exploiting the fact that the difference in average outcomes between the two treatment groups is asymptotically normal with a variance that can be estimated from the data.
 
@@ -143,13 +279,15 @@ In most cases, a randomization test is preferable to a parametric one:
 
 There is no hard and fast rule describing the rate at which parametric tests approach the exact permutation solution, as they are both highly dependent on the particular data observed.
 On the one hand, some argue that violations of parametric test assumptions necessitate the use of permutation methods.
-\citet{ludbrook_why_1998} point out that medical trials rarely follow the population sampling model implicit in parametric methods.
-However, the parametric and nonparametric tests seem to perform similarly in most simulations, even when data violate the assumptions of the parametric method.
-Medical trials studying pain or perceived severity scores often use Likert scale data, which is discrete and does not match the normality assumptions of parametric tests.
-However, \citet{winter_five-point_2010} found that the two sample $t$ test and Mann-Whitney test had comparable Type I and II error rates for five-point Likert scale data, suggesting that the violation of normality does not entirely invalidate the parametric test.
-\todo{what other linear model comparisons have people done?}
-Most similar to our question of study, \citet{vickers_parametric_2005} compared the parametric ANCOVA to the Mann-Whitney rank test in the context of randomized experiments, finding that except in extreme situations, ANCOVA outperformed the nonparametric test.
+\cite{ludbrook_why_1998} point out that medical trials rarely follow the population sampling model implicit in parametric methods.
+Many people recommend using permutation tests in place of the usual parametric tests for typical analyses, such as ANOVA and generalized linear models (\cite{still_approximate_1981, winkler_permutation_2014}).
+They argue that there are a myriad of ways that the data may violate the necessary assumptions for the test, and so it is more robust to use a permutation test.
 
+However, simulations show that parametric and nonparametric tests seem to perform similarly in most cases, even when data violate the assumptions of the parametric method.
+Medical trials studying pain or perceived severity scores often use Likert scale data, which is discrete and does not match the normality assumptions of parametric tests.
+However, \cite{winter_five-point_2010} found that the two sample $t$ test and Mann-Whitney test had comparable Type I and II error rates for five-point Likert scale data, suggesting that the violation of normality does not entirely invalidate the parametric test.
+\cite{vickers_parametric_2005} compared the parametric ANCOVA to the Mann-Whitney rank test in the context of randomized experiments, finding that except in extreme situations, ANCOVA was more powerful than the nonparametric test.
+Most similar to our question of study, \cite{anderson_empirical_1999} found little difference between several permutation tests for coefficients in a linear model alongside the parametric $t$ test.
 
 In this paper, we review hypothesis tests for a treatment effect which incorporate covariate adjustment to increase power.  
 We focus on ANCOVA and its permutation counterparts, comparing their performance in different scenarios, and illustrating their application with a clinical dataset.
@@ -157,7 +295,7 @@ We find in simulations that even when assumptions are not satisfied, the paramet
 We apply each of the methods to data from a clinical trial seeking to compare the performance of two treatments for gastroesophageal reflux disease (GERD).
 We conclude by discussing implications of these results for practitioners.
 
-\section{Methods}
+\section*{Methods}
 % The methods section should include:
 
 %the aim, design and setting of the study
@@ -165,7 +303,7 @@ We conclude by discussing implications of these results for practitioners.
 %a clear description of all processes, interventions and comparisons. Generic drug names should generally be used. When proprietary brands are used in research, include the brand names in parentheses
 %the type of statistical analysis used, including a power calculation if appropriate
 
-\subsection{Problem and notation \todo{what do others call this?}}
+\subsection*{Problem and notation \todo{what do others call this?}}
 Suppose we randomly assign two treatments labelled $0$ and $1$ to a group of individuals.
 We are interested in comparing the relative effectiveness of treatment 1 to treatment 0.
 Let $\mathbf{Z}$ indicate treatment assignment, 0 or 1, 
@@ -185,7 +323,7 @@ Any of these quantities may be of clinical interest; it is a matter of philosoph
 A typical problem is to estimate the average of differences $Y_{ij}(1) - Y_{ij}(0)$.
 Instead of estimation, we will focus on hypothesis testing for whether these differences are nonzero.
 
-\subsection{Parametric ANCOVA}
+\subsection*{Parametric ANCOVA}
 
 The model is
 
@@ -208,7 +346,7 @@ To carry out the standard parametric hypothesis test, we make the following assu
 \item \textbf{Linearity:} The data $\mathbf{Y}$ are related to $\mathbf{X}$ and $\mathbf{Z}$ linearly.
 \item \textbf{Constant slopes:} Stratum only affects the intercept $\alpha_j$, not the slopes $\beta$ and $\gamma$.
 \item \textbf{IID Errors:} The $\eps_{ij}$ are independent and identically distributed with mean $0$ and variance $\sigma^2$.
-\item \textbf{Independence:} If $\mathbf{X}$ is random, $\eps \independent X$.\footnote{$\independent$ means statistical independence; $\perp$ means orthogonal.}
+\item \textbf{Independence:} If $\mathbf{X}$ is random, $\mathbf{\varepsilon}$ is statistically independent of $\mathbf{X}$.
 \item \textbf{Normality:} The errors are normally distributed.
 \end{enumerate}
 
@@ -223,9 +361,7 @@ $\hat{\sigma}_{\hat{\gamma}}^2$ is estimated by first computing the residual sta
 then taking the diagonal element corresponding to the treatment variable in the inverse covariance matrix of covariates.
 }
 follows the Student $t$ distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
-The p-value for this hypothesis test is the probability that a value drawn from this $t$ distribution is larger in magnitude than $T$.
-
-\todo{Add a paragraph about why this might go wrong, perhaps some citations. All depends on estimating the error variance correctly, because $t$ distribution is the ratio of a normal and a chi-square}
+The $p$-value for this hypothesis test is the probability that a value drawn from this $t$ distribution is larger in magnitude than $T$.
 
 
 The ANCOVA model allows for fixed stratum effects, but they are only additive in the outcome.  
@@ -234,7 +370,7 @@ The estimated linear model may not accurately capture details of the true data-g
 If effects are not constant across strata, then the coefficient $\gamma$ may be attenuated towards 0.  
 A test of the null hypothesis that $\gamma = 0$ will be valid, but will not reflect the true magnitude of treatment effects among individuals.
 
-\subsection{Stratified permutation test}
+\subsection*{Stratified permutation test}
 Suppose we wish to test the null hypothesis that individual by individual, treatment has no effect.
 This is referred to as the ``sharp null'' hypothesis:
 
@@ -267,13 +403,13 @@ Our simulations in Section~\ref{simulations} show a loss of power when effects a
 One way to construct a test statistic is to combine the statistics directly, for instance taking the sum of absolute values, into a single statistic on the data.
 Taking the absolute value before summing ensures that effects with different signs do not cancel each other out.
 The permutation test is conducted identically, using this statistic in place of the difference in means.
-Another way to construct a test is to use the nonparametric combination (NPC) framework proposed by \citet{pesarin_permutation_2010}.
+Another way to construct a test is to use the nonparametric combination (NPC) framework proposed by \cite{pesarin_permutation_2010}.
 In this framework, we would break down the ``global'' null hypothesis of no effect whatsoever into the intersection of null hypotheses of no treatment effect within each stratum.
 For NPC, one first conducts each partial test separately, then combines their $p$-values in a way that preserves dependencies.
 In this case, strata are randomized independently so there are no dependencies to preserve, making this method is equivalent to the first.
 
 
-\subsection{Permutation tests with the linear model}
+\subsection*{Permutation tests with the linear model}
 The tests in the previous section only use information on the treatment and the outcome.
 However, experimenters record additional covariates, some of which may be predictive of the outcome.
 One would like to construct a more powerful test by incorporating these covariates in a way to reduce the variance of the statistic.
@@ -287,7 +423,7 @@ Instead of using the difference in means as the statistic, we use the $t$ statis
 If treatment was assigned at random within each stratum, then it is guaranteed that $\mathbf{Z}$ and $\mathbf{\varepsilon}$ are statistically independent, conditional on stratum.
 Therefore, we may conduct a test by permuting treatment assignments $\mathbf{Z}$ within site, independently across sites, and calculating a test statistic for each such permutation.
 
-\citet{freedman_nonstochastic_1983} propose an alternative test based on the residuals of the linear regression.
+Freedman and Lane \cite{freedman_nonstochastic_1983} propose an alternative test based on the residuals of the linear regression.
 Let's take an alternative view of the problem.
 We still write the outcome in the form of Equation~\ref{eqn:ancova}, but now, we do not treat the $\varepsilon_{ij}$ as random.
 They are simply defined to be the difference between the observed outcome $Y_{ij}$ and the data's linear projection onto the plane $\alpha_j + \beta X_{ij}+ \gamma Z_{ij}$.
@@ -311,25 +447,25 @@ We construct a permutation distribution using several steps:
 \end{enumerate}
 
 
-It is important to note that the permutation tests described here are only exact in the context of randomized experiments.
-In observational studies, even under the best circumstances they are only approximately exact.
-In randomized experiments, treatment is assigned at random, and is therefore statistically independent of the covariates $\mathbf{X}$ and the errors $\mathbf{\varepsilon}$.
-Conversely, in observational studies, treatment may be associated with $\mathbf{X}$ and/or $\mathbf{\varepsilon}$, often in a way that is difficult or impossible to model.
-Independence, or the weaker condition of exchangeability, is what enables us to construct permutation distributions while holding $\mathbf{X}$ fixed.
-When exchangeability doesn't hold, it does not make sense to permute $\mathbf{Z}$ while holding $\mathbf{X}$ fixed, as we cannot disentangle the effect of one over the other.
-In order to justify the use of one of these linear model tests for a treatment effect in observational data, one must argue that the object being permuted is uncorrelated with the other variables being held fixed.
-This can be done visually using scatterplots and residual plots (\cite{freedman_nonstochastic_1983}).
 
-Others have developed approximate permutation tests which use linear regression to adjust for covariates. 
-\bit
-\item Cite a few here, \todo{all the Anderson papers}
-\item explain why Freedman-Lane is best. 
-\item Cite some people who have shown by simulation that it works better.
-\eit
+Others have developed different variants on approximate permutation tests based on linear regression. 
+There is some disagreement on what constitutes an appropriate permutation scheme;
+everything we have described so far is approximate insofar as we do not know the ``true'' data-generating process described by the $\alpha_j$ and $\beta$,
+only the estimates $\hat{\alpha}_j$ and $\hat{\beta}$.
+\cite{manly_randomization_2006} proposes randomizing the outcomes $\mathbf{Y}$, treating them as though they were randomly assigned to pairs $(X, Z)$ under the null hypothesis.
+Permutations under the null treat all coefficients as 0, which may not reflect the true data-generating process.
+\cite{kennedy_randomization_1995} proposed a permutation method similar in spirit to \cite{freedman_nonstochastic_1983}, but which differs procedurally.
+Both methods attempt to measure the correlation between treatment and unexplained variation in outcomes, but
+instead of regressing pseudo-outcomes $\mathbf{Y}^\pi$ on covariates to obtain a permutation distribution, he recommended regressing $\mathbf{Z}$ on the permuted residuals $\mathbf{\hat{\varepsilon}}^\pi$ and using the $t$ statistic from the resulting coefficient as the test statistic. 
+
+Several authors have compared these tests, theoretically and through simulations \cite{anderson_empirical_1999, anderson_permutation_2001, kennedy_randomization_1996}.
+They find that the Freedman-Lane test of residuals is asymptotically equivalent to the ``oracle'' exact hypothesis test, which we could conduct if we knew which permutations of $\mathbf{Y}$ given $\mathbf{X}$ were equiprobable under the null hypothesis \cite{anderson_permutation_2001}.
+This confirms empirical results, which show that the Freedman-Lane test performs better than other linear model based tests in simulations simulations \cite{anderson_empirical_1999}, though its advantage is small.
+Thus, throughout the rest of the paper, we focus on the two linear regression permutations we described in detail: linear regression after permuting treatment assignments and the Freedman-Lane method of permuting residuals.
 
 
-\section{Results}
-\subsection{Simulations}\label{simulations}
+\section*{Results}
+\subsection*{Simulations}\label{simulations}
 
 To compare the performance of these tests, we simulated data coming from a randomized experiment, using several different data-generating processes.
 We applied the tests to the data and compared their empirical power over repeated random treatment assignments and random errors.
@@ -365,8 +501,8 @@ We use two designs:
 
 \noindent We draw the baseline measurements once, treating them as fixed, and condition on observing $\{ Y_{ij0} : {i = 1,\dots,16, j = 1,\dots, 3}\}$.
 Then, for 1000 trials, we randomly assign treatment to half of the individuals within each stratum, generate random errors, and construct new outcomes $Y_{ij1}$ using Equation~\ref{eqn:dgp}.
-We conduct all five tests on this new data, obtaining a two-sided p-value for each.
-The power curves are estimated by computing the proportion of observed p-values less than or equal to $\alpha$, for $\alpha = 0.01, 0.02, \dots, 1$.
+We conduct all five tests on this new data, obtaining a two-sided $p$-value for each.
+The power curves are estimated by computing the proportion of observed $p$-values less than or equal to $\alpha$, for $\alpha = 0.01, 0.02, \dots, 1$.
 
 In our first set of simulations, we assume that the baseline measurements $Y_{ij0}$ are standard normally distributed and the pairs $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 We will assume that $\beta_0 = 1$ and let the treatment effect be $\gamma = 1$
@@ -471,11 +607,11 @@ All of the tests have lower than nominal level.
 It makes sense that in all of these simulations, the permutation test using the difference in outcome and baseline as the response measure is more powerful than the permutation test using the raw outcomes.
 In additional simulations\footnote{see supplementary files on GitHub}, we modified the data-generating process given by Equation~\ref{eqn:dgp} so that the outcome and baseline had correlation of $0.25$.
 In this case, the result was reversed: the differenced test had low power while the test using the raw outcomes had a power curve closer to the tests that adjust for covariates using a linear model.
-This phenomenon has been studied before by \citet{frison_repeated_1992}, who recommended to use the difference in outcome and baseline if their correlation is greater than $0.5$ and to use the outcome only if their correlation is less than $0.5$.
+This phenomenon has been studied before by \cite{frison_repeated_1992}, who recommended to use the difference in outcome and baseline if their correlation is greater than $0.5$ and to use the outcome only if their correlation is less than $0.5$.
 
 
 
-\subsection{Clinical data results}
+\subsection*{Clinical data results}
 We compare the methods we discussed on a dataset from a clinical trial comparing the effectiveness of two treatments for gastroesophageal reflux disease (GERD).
 Patients were treated at eight sites in two different countries.
 At each site, patients were randomly assigned one of two treatments.
@@ -491,7 +627,7 @@ We do not include country in the model, as a country-level effect should be capt
 The linear model for ANCOVA analysis is as in Equation~\ref{eqn:ancova}.
 We chose to use this form of the model, with the actual outcomes as the $\mathbf{Y}$ and the baseline measures as control variables, rather than testing the difference in outcome and baseline. 
 The outcome and baseline had a low correlation (for instance, $0.56$ for daily ``hrdq''), so we did not use their difference as the dependent variable. 
-As our simulations and previous work (\cite{frison_repeated_1992}) show, when the correlation between baseline and outcome is low, it is more powerful to control for baseline outcomes using a model.
+As our simulations and previous work \cite{frison_repeated_1992} show, when the correlation between baseline and outcome is low, it is more powerful to control for baseline outcomes using a model.
 
 Figure~\ref{fig:clinical_distr} shows the distribution of each clinical endpoint, separated by treatment group.
 There is a clear visual difference in distributions for daily heartburn (``daily\_heart''), daily ``hrdq'', and heartburn frequency (``heart\_freq'').
@@ -517,44 +653,154 @@ These results match our simulations: the parametric test has comparable or sligh
 \input{fig/results_pvalue_summary.tex}
 \end{center}
 
-\section{Discussion}
+\section*{Discussion}
 % This section should discuss the implications of the findings in context of existing research and highlight limitations of the study.
 
-\bit
-\item This paper adds to the literature comparing parametric and nonparametric tests.
-Our results match those of \citet{vickers_parametric_2005}, where he found that ANCOVA performed the same or better than nonparametric tests.
-\item Results about differenced vs raw outcomes. This isn't new but our simulations and empirical dataset confirm it in the context of permutation tests
-\item In an ideal case, one knows all covariates related to the outcome and fits a fully saturated linear model (including all covariates and their interactions), the coefficient for the treatment is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
-\item Permutation tests don't come free of assumptions, though.  \citet{romano_behavior_1990} warns against using permutation tests naively, if items are not truly exchangeable. For instance, he points to the case where observations have unequal variances.  \citet{boik_fisherpitman_1987} illustrates this phenomenon, comparing the normal theory $F$ test to its permutation counterpart and demonstrating by simulation that the latter has larger than nominal level.
-\item Errors are very important!  They are a source of non-exchangeability.  We can't observe them, so we need to believe that they are actually homogeneous and do some checks on residuals to give evidence.
-\bit
-\item \citet{gail_tests_1988} propose a randomization test based on residuals, using not a linear model but an exponential family model to construct residuals, and find that omitting relevant covariates leads to tests with higher than nominal level.  \todo{perhaps this is something that one should be mindful of when using these linear model based tests.}
-\item Freedman-Lane stuff: for the appro
-In randomized experiments, we are guaranteed that treatment $\mathbf{Z}$ is independent of $\mathbf{\varepsilon}$, conditional on stratum.
-Indeed, the distribution of residuals looks nearly equal between treatment groups in both models.
-As mentioned, this should not be an issue since we permute treatments within sites, independently across sites.
-(In general, when treatment is not randomly assigned, this condition is necessary for the permutation test to be valid.)
-\eit
-\eit
+This paper adds to the literature comparing parametric and nonparametric tests.
+Our results match those of \cite{vickers_parametric_2005, anderson_empirical_1999}, where parametric ANCOVA and regression-based $t$ tests performed the same or better than the comparable nonparametric tests.
+We simulated x y and z violations
+When the ANCOVA assumptions were violated, the linear regression-based tests lost power relative to the best case data-generating process where all assumptions were satisfied.
+However, power did not change \textit{relative to each other}.
+It is a matter of philosophy which one chooses: while the parametric test may be robust to violations of its assumptions, it is somewhat reassuring that the permutation test can exactly match the randomization that was done and makes fewer distributional assumptions.
+
+Permutation tests don't come free of assumptions, though.  \cite{romano_behavior_1990} warns against using permutation tests naively if items are not truly exchangeable. 
+For instance, he points to the case where observations have unequal variances.  
+This is a problem as we cannot observe the errors; it is a leap of faith to suppose that they are homogeneous.
+\cite{boik_fisherpitman_1987} illustrates this phenomenon, comparing the normal theory $F$ test to its permutation counterpart and demonstrating by simulation that the latter has larger than nominal level when the error variances are heterogeneous.
+
+It is important to note that the permutation tests described here are only approximately exact in the context of randomized experiments.
+In this case, treatment is assigned at random and is therefore statistically independent of the covariates $\mathbf{X}$ and the errors $\mathbf{\varepsilon}$.
+Conversely, in observational studies, treatment may be associated with $\mathbf{X}$ and/or $\mathbf{\varepsilon}$, often in a way that is difficult or impossible to model.
+Independence, or the weaker condition of exchangeability, is what enables us to construct permutation distributions while holding $\mathbf{X}$ fixed.
+When exchangeability doesn't hold, we cannot disentangle the effect of $\mathbf{Z}$ from the effect of $\mathbf{X}$.
+In observational studies, one must provide evidence that items are exchangeable in order to achieve approximate exchangeability.
+One must argue that the object being permuted is uncorrelated with the other variables being held fixed.
+This can be done visually using scatterplots and residual plots \cite{freedman_nonstochastic_1983} and from subject-matter knowledge.
+
+One should be mindful of which covariates are important to control for.
+Ideally, one knows all covariates related to the outcome.
+In that case, the coefficient for treatment in a fully saturated linear model (including all covariates and their interactions) is an asymptotically consistent estimate of the average treatment effect \cite{lin_agnostic_2013}.
+It is rare that one knows \textit{all} relevant covariates in practice; failure to control for all relevant variables can introduce bias in certain permutation tests.
+ \cite{gail_tests_1988} propose a randomization test based on residuals, using not a linear model but an exponential family model to construct residuals, and find that omitting relevant covariates leads to tests with higher than nominal level.
+ 
+The method of controlling for baseline covariates matters, too.
+The naive thing to do is to consider change scores, subtracting baseline measures from the outcome and doing hypothesis testing using the change as the dependent variable.
+Our simulations confirm the suggestion of \cite{frison_repeated_1992} to use change scores only when there is a strong correlation between baseline and outcome.
+If the correlation is weak, then the resulting test using the difference may be less powerful than ignoring the baseline altogether.
+Instead, we suggest incorporating the baseline in a regression model.
+This is more general than using differences;
+treating the change scores as the dependent variable is a special case of the linear regression, constraining the coefficient on the baseline measure to be $1$.
+Weak correlations between baseline and outcome occur often in practice, as was the case with our GERD dataset.
 
 
-% list of abbreviations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                          %%
+%% Backmatter begins here                   %%
+%%                                          %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Declarations}
-% see http://bmcmedresmethodol.biomedcentral.com/submission-guidelines/preparing-your-manuscript/technical-advance-article
-\textbf{Ethics approval and consent to participate}
-Not applicable
-\textbf{Consent for publication}
-\textbf{Availability of data and material}
-\textbf{Competing interests}
-\textbf{Funding}
-\textbf{Authors' contributions}
-\textbf{Acknowledgements}
-\textbf{Authors' information}
+%\begin{backmatter}
+%
+%\section*{Competing interests}
+%  The authors declare that they have no competing interests.
+%
+%\section*{Author's contributions}
+%    Text for this section \ldots
+%
+%\section*{Acknowledgements}
+%  Text for this section \ldots
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                  The Bibliography                       %%
+%%                                                         %%
+%%  Bmc_mathpys.bst  will be used to                       %%
+%%  create a .BBL file for submission.                     %%
+%%  After submission of the .TEX file,                     %%
+%%  you will be prompted to submit your .BBL file.         %%
+%%                                                         %%
+%%                                                         %%
+%%  Note that the displayed Bibliography will not          %%
+%%  necessarily be rendered by Latex exactly as specified  %%
+%%  in the online Instructions for Authors.                %%
+%%                                                         %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\bibliographystyle{plainnat}
-\bibliography{references}
-
+% if your bibliography is in bibtex format, use those commands:
+\bibliographystyle{bmc-mathphys} % Style BST file (bmc-mathphys, vancouver, spbasic).
+\bibliography{references}      % Bibliography file (usually '*.bib' )
+%% for author-year bibliography (bmc-mathphys or spbasic)
+%% a) write to bib file (bmc-mathphys only)
+%% @settings{label, options="nameyear"}
+%% b) uncomment next line
+%%\nocite{label}
+%
+%% or include bibliography directly:
+%% \begin{thebibliography}
+%% \bibitem{b1}
+%% \end{thebibliography}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                               %%
+%%% Figures                       %%
+%%%                               %%
+%%% NB: this is for captions and  %%
+%%% Titles. All graphics must be  %%
+%%% submitted separately and NOT  %%
+%%% included in the Tex document  %%
+%%%                               %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%%
+%%% Do not use \listoffigures as most will included as separate files
+%
+%\section*{Figures}
+%  \begin{figure}[h!]
+%  \caption{\csentence{Sample figure title.}
+%      A short description of the figure content
+%      should go here.}
+%      \end{figure}
+%
+%\begin{figure}[h!]
+%  \caption{\csentence{Sample figure title.}
+%      Figure legend text.}
+%      \end{figure}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                               %%
+%%% Tables                        %%
+%%%                               %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%% Use of \listoftables is discouraged.
+%%%
+%\section*{Tables}
+%\begin{table}[h!]
+%\caption{Sample table title. This is where the description of the table should go.}
+%      \begin{tabular}{cccc}
+%        \hline
+%           & B1  &B2   & B3\\ \hline
+%        A1 & 0.1 & 0.2 & 0.3\\
+%        A2 & ... & ..  & .\\
+%        A3 & ..  & .   & .\\ \hline
+%      \end{tabular}
+%\end{table}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%                               %%
+%%% Additional Files              %%
+%%%                               %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\section*{Additional Files}
+%  \subsection*{Additional file 1 --- Sample additional file title}
+%    Additional file descriptions text (including details of how to
+%    view the file, if it is in a non-standard format or the file extension).  This might
+%    refer to a multi-page table or a figure.
+%
+%  \subsection*{Additional file 2 --- Sample additional file title}
+%    Additional file descriptions text.
+%
+%
+%\end{backmatter}
 
 
 
