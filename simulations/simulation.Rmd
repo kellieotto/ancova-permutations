@@ -20,6 +20,16 @@ require(xtable)
 options(xtable.comment = FALSE, xtable.include.rownames = FALSE, xtable.align = "p{3.5cm}")
 require(grid)
 require(gridExtra)
+
+report_theme <- theme_bw() + theme(
+  axis.text.x = element_text(size = 14, angle = -45),
+  axis.text.y = element_text(size = 14),
+  axis.title = element_text(size = 20),
+  title = element_text(size = 20),
+  legend.title = element_text(size = 14),
+  legend.text = element_text(size = 14),
+  strip.text.x = element_text(size = 14)
+)
 ```
 
 # Normal data
@@ -165,6 +175,7 @@ plot_power_curves <- function(power_mat, title){
   xlab("P-value") +
   ylab("Power") +
   ggtitle(title)
+  
 }
 
 plot_pvalue_hist <- function(pvalue_mat, title){
@@ -215,7 +226,6 @@ design0_power <- apply(design0_pvalues, 2, compute_power)
 
 ```{r design_null_plots, fig.height = 4, fig.align="center"}
 plot_power_curves(design0_power, "No Effect, Normal Errors")
- 
 plot_pvalue_hist(design0_pvalues, "No Effect, Normal Errors")
 ```
 
@@ -236,7 +246,6 @@ design00_power <- apply(design00_pvalues, 2, compute_power)
 
 ```{r design_null_heavy_plots, fig.height = 4, fig.align="center"}
 plot_power_curves(design00_power, "No Effect, Heavy-tailed Errors")
-
 plot_pvalue_hist(design00_pvalues, "No Effect, Heavy-tailed Errors") 
 ```
 
@@ -264,7 +273,6 @@ design1_power <- apply(design1_pvalues, 2, compute_power)
 
 ```{r design1_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design1_power, "Constant Additive Effect of 1, Normal Errors")
-
 plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 1, Normal Errors")
 ```
 
@@ -291,7 +299,6 @@ design2_power <- apply(design2_pvalues, 2, compute_power)
 
 ```{r design2_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design2_power, "Effect of 1 at a Single stratum, Normal Errors")
-
 plot_pvalue_hist(design2_pvalues, "Effect of 1, Normal Errors")
 ```
 
@@ -318,7 +325,6 @@ design3_power <- apply(design3_pvalues, 2, compute_power)
 
 ```{r design3_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design3_power, "Constant Additive Effect of 1, Heavy-tailed Errors")
-
 plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 1, Heavy-tailed Errors")
 ```
 
@@ -343,8 +349,7 @@ design4_power <- apply(design4_pvalues, 2, compute_power)
 ```
 
 ```{r design4_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design4_power, "Effect of 1 at a Single stratum, Heavy-tailed Errors")
-
+plot_power_curves(design4_power, "Effect of 1 at a Single stratum, Heavy-tailed Errors") 
 plot_pvalue_hist(design4_pvalues, "Effect of 1, Heavy-tailed Errors")
 ```
 
@@ -380,7 +385,6 @@ design5_power <- apply(design5_pvalues, 2, compute_power)
 
 ```{r design5_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design5_power, "Constant Additive Effect of 1, Normal Errors \n Unpredictive baseline")
-
 plot_pvalue_hist(design5_pvalues, "Constant Additive Effect of 1, Normal Errors \n Unpredictive baseline")
 ```
 
@@ -415,7 +419,6 @@ design6_power <- apply(design6_pvalues, 2, compute_power)
 
 ```{r design6_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design6_power, "Constant Additive Effect of 1, Normal Errors")
-
 plot_pvalue_hist(design6_pvalues, "Constant Additive Effect of 1, Normal Errors")
 ```
 
@@ -441,7 +444,6 @@ design7_power <- apply(design7_pvalues, 2, compute_power)
 
 ```{r design7_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design7_power, "Effect of 1 at a Single stratum, Normal Errors")
-
 plot_pvalue_hist(design7_pvalues, "Effect of 1, Normal Errors")
 ```
 
@@ -477,7 +479,6 @@ design8_power <- apply(design8_pvalues, 2, compute_power)
 
 ```{r design8_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design8_power, "Constant Additive Effect of 1, Heteroskedastic Errors")
-
 plot_pvalue_hist(design8_pvalues, "Constant Additive Effect of 1, Heteroskedastic Errors")
 ```
 
@@ -504,7 +505,6 @@ design9_power <- apply(design9_pvalues, 2, compute_power)
 
 ```{r design9_plot, fig.height = 4, fig.align="center"}
 plot_power_curves(design9_power, "Effect of 1 at a Single stratum, Heteroskedastic Errors")
-
 plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
 ```
 
@@ -528,32 +528,23 @@ twobytwo <- all_power_curves %>%
   ggplot(aes_string(x = "pvalue", y = "value", color = "Method")) +
   geom_line() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  xlab("P-value") +
+  xlab("Significance Level") +
   ylab("Power") +
   facet_wrap(Treatment~Errors) +
   ggtitle("Gaussian Data") +
-  theme(
-    axis.text.x = element_text(size = 12),
-    axis.text.y = element_text(size = 12),
-    axis.title = element_text(size = 16),
-    title = element_text(size = 16),
-    legend.title = element_text(size = 12),
-    legend.text = element_text(size = 12),
-    strip.text.x = element_text(size = 12),
-    legend.position = "bottom"
-  ) + 
+  report_theme +
+  theme(legend.position = "bottom") + 
   guides(color=guide_legend(nrow=2,byrow=TRUE))
-
 twobytwo
 
 pdf(file = "../ms/fig/normal_simulation_power.pdf", width = 8)
-twobytwo
+twobytwo 
 dev.off()
 ```
 
 
 ```{r power_summary_tab, results = "asis"}
-summary05 <- t(sapply(powers, function(x) x[5, c(6, 7, 1:5)]))
+summary05 <- t(sapply(powers, function(x) x[5, c(7, 6, 1:5)]))
 summary05 <- summary05[c(5, 1, 2, 6, 3, 4), ]
 summarytab <- xtable(summary05, digits = 3, align = "rp{1.15in}|p{0.7in}|p{0.6in}p{0.8in}p{0.8in}p{0.8in}p{0.75in}",
        caption = "Empirical power at level $0.05$ for Gaussian simulated data",

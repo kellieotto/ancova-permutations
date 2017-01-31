@@ -21,6 +21,7 @@ options(xtable.comment = FALSE, xtable.include.rownames = FALSE, xtable.align = 
 require(grid)
 require(gridExtra)
 
+
 set.seed(737324921) # Generated from random.org Timestamp: 2016-11-07 19:21:48 UTC
 
 clinical <- read.csv("../data/clinical_cleaned.csv", header = TRUE, stringsAsFactors = FALSE)
@@ -51,7 +52,8 @@ clinical %>%
   xlab("Site ID") +
   ylab("Count") +
   ggtitle("Number of Individuals per Treatment") +
-  labs(fill = "Treatment") 
+  labs(fill = "Treatment")+
+  theme_bw()
 ```
 
 The data are not in the right shape to analyze a single variable.
@@ -87,13 +89,14 @@ plot_distrs <- lapply(continuous_vars, function(variable){
 #                       breaks=c("0", "1"),
 #                       labels=c("A", "B")) + 
         labs(x = variable, fill = "Treatment") +
+        theme_bw() +
         theme(
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12),
         axis.title = element_text(size = 16),
         title = element_text(size = 16),
         legend.title = element_text(size = 12),
-        legend.text = element_text(size = 12),
+        legend.text = element_text(size = 14),
         strip.text.x = element_text(size = 12)
         ) 
   return(p)
@@ -109,6 +112,7 @@ plot_distrs[[length(plot_distrs)+1]] <- legend
 pdf("../ms/fig/clinical_distr.pdf", width = 8, height = 4)
 do.call(grid.arrange, c(plot_distrs, nrow = 2))
 dev.off()
+do.call(grid.arrange, c(plot_distrs, nrow = 2))
 ```
 
 # Analysis - Primary endpoint
@@ -206,7 +210,8 @@ data.frame("perm" = c(diff_means_distr1, diff_means_distr2),
   ggplot(aes(x = perm, fill = model)) +
   geom_histogram() +
   facet_grid(~model) +
-  geom_vline(aes(xintercept = xintercept))
+  geom_vline(aes(xintercept = xintercept)) +
+  theme_bw()
 
 
 ```
@@ -241,7 +246,8 @@ data.frame("perm" = c(diff_means_distr_bystrata1, diff_means_distr_bystrata2),
   ggplot(aes(x = perm, fill = model)) +
   geom_histogram() +
   facet_grid(~model) +
-  geom_vline(aes(xintercept = xintercept))
+  geom_vline(aes(xintercept = xintercept)) +
+  theme_bw()
 ```
 
 ## Covariate-adjusted permutation test
@@ -300,7 +306,8 @@ data.frame("perm" = c(lm1_t_distr, lm2_t_distr),
   geom_vline(aes(xintercept = xintercept)) +
   xlab("t Statistic") +
   ylab("Frequency") +
-  ggtitle("Permutation Distributions")
+  ggtitle("Permutation Distributions") +
+  theme_bw()
 ```
 
 
@@ -351,7 +358,8 @@ p11 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Treatment") + ylab("Residual") + 
-  ggtitle("Outcome Model")
+  ggtitle("Outcome Model") +
+  theme_bw()
 p21 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>%  
   melt(id.vars = c("SUBJID", "tr", "SITEID")) %>%
@@ -361,7 +369,8 @@ p21 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Site ID") + ylab("Residual") + 
-  ggtitle("Outcome Model")
+  ggtitle("Outcome Model") +
+  theme_bw()
 p12 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>% 
   melt(id.vars = c("SUBJID", "tr", "SITEID")) %>%
@@ -371,7 +380,8 @@ p12 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Treatment") + ylab("Residual") +
-  ggtitle("Differences Model")
+  ggtitle("Differences Model") +
+  theme_bw()
 p22 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>%  
   melt(id.vars = c("SUBJID", "tr", "SITEID")) %>%
@@ -381,7 +391,8 @@ p22 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Site ID") + ylab("Residual") +
-  ggtitle("Differences Model")
+  ggtitle("Differences Model") +
+  theme_bw()
 grid.arrange(p12, p11, p22, p21, nrow = 2, ncol = 2)
 ```
 
@@ -426,7 +437,8 @@ data.frame("perm" = c(lm1_t_distr, lm2_t_distr),
   ggplot(aes(x = perm, fill = model)) +
   geom_histogram() +
   facet_grid(~model) +
-  geom_vline(aes(xintercept = xintercept))
+  geom_vline(aes(xintercept = xintercept)) +
+  theme_bw()
 
 
 ```
