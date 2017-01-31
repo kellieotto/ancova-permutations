@@ -6,6 +6,7 @@
 \usepackage{natbib}
 \usepackage{url} % not crucial - just used below for the URL 
 \usepackage{color}
+ \usepackage{multirow}
 \newcommand{\todo}[1]{{\color{red}{TO DO: \sc #1}}}
 
 %\pdfminorversion=4
@@ -395,9 +396,27 @@ In this case, the permutation test may have slightly higher power than the param
 \caption{Empirical power curves for the Gaussian simulated data}
 \label{fig:normal_sim_power}
 \end{figure}
-\begin{center}
-\input{fig/normal_simulation_power_summary.tex}
-\end{center}
+%\begin{center}
+%\input{fig/normal_simulation_power_summary.tex}
+%\end{center}
+
+
+
+\begin{table}[]
+\centering
+\label{tab:normal_power}
+\begin{tabular}{ll|ccccc}
+\multicolumn{2}{c|}{Design}                                                                  & \multicolumn{5}{c}{$p$-value}                                                                                                                                                                                                                                                                                                                                           \\ \hline
+Errors                        & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end{tabular} & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Differenced\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
+\multirow{3}{*}{Gaussian}     & None                                                        & 0.058                      & 0.042                                                                                & 0.038                                                                                 & 0.062                                                                        & 0.057                                                                        \\
+                              & Constant                                                    & 0.886                      & 0.545                                                                                 & 0.858                                                                                 & 0.891                                                                        & 0.892                                                                        \\
+                              & Single stratum                                              & 0.159                      & 0.089                                                                                & 0.160                                                                                 & 0.162                                                                        & 0.170                                                                        \\ \hline
+\multirow{3}{*}{Heavy-tailed} & None                                                        & 0.032                      & 0.040                                                                                & 0.045                                                                                 & 0.042                                                                        & 0.040                                                                        \\
+                              & Constant                                                    & 0.355                      & 0.240                                                                                & 0.378                                                                                 & 0.400                                                                        & 0.393                                                                        \\
+                              & Single stratum                                              & 0.066                      & 0.080                                                                                & 0.082                                                                                 & 0.076                                                                        & 0.080                                                                        \\ \hline
+\end{tabular}
+\caption{Empirical power at level $0.05$ for Gaussian simulated data.}
+\end{table}
 
 Our second set of simulations used the same design as the previous ones, but modified the sizes of the treatment groups.
 Within each stratum, 4 individuals received one treatment and 12 received the other.
@@ -414,9 +433,26 @@ In this case, the permutation tests (except for the simple stratified permutatio
 %\caption{Empirical power curves for the Gaussian simulated data with imbalanced group sizes}
 %\label{fig:imbalanced_sim_power}
 %\end{figure}
-\begin{center}
-\input{fig/imbalanced_simulation_power_summary.tex}
-\end{center}
+%\begin{center}
+%\input{fig/imbalanced_simulation_power_summary.tex}
+%\end{center}
+
+
+\begin{table}[ht]
+\centering
+\label{tab:imbalanced_power}
+\begin{tabular}{ll|ccccc}
+\multicolumn{2}{c|}{Design}                                                                 & \multicolumn{5}{c}{$p$-value}                                                                                                                                                                                                                                                                                                                                           \\ \hline
+Errors                        & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end{tabular} & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Differenced\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
+\multirow{3}{*}{Gaussian}     & None                                                        & 0.046                      & 0.031                                                                                & 0.028                                                                                 & 0.042                                                                        & 0.045                                                                        \\
+                              & Constant                                                    & 0.840                      & 0.490                                                                                & 0.810                                                                                 & 0.870                                                                        & 0.860                                                                        \\
+                              & Single stratum                                              & 0.120                      & 0.050                                                                                & 0.090                                                                                 & 0.100                                                                        & 0.120                                                                        \\ \hline
+\multirow{3}{*}{Heavy-tailed} & None                                                        & 0.034                      & 0.054                                                                                & 0.055                                                                                 & 0.047                                                                        & 0.042                                                                        \\
+                              & Constant                                                    & 0.230                      & 0.200                                                                                & 0.270                                                                                 & 0.260                                                                        & 0.270                                                                        \\
+                              & Single stratum                                              & 0.070                      & 0.080                                                                                & 0.090                                                                                 & 0.090                                                                        & 0.080                                                                        \\ \hline
+\end{tabular}
+\caption{Empirical power at level $0.05$ for Gaussian simulated data with imbalanced treatment groups} 
+\end{table}
 
 In our third set of simulations, we made the baseline measurements $Y_{ij0}$ discrete and skewed.
 This type of data occurs in some surveys where individuals are asked to rate their symptom severity or some experience on a scale from 1 to 10, for instance.
@@ -468,10 +504,24 @@ Table~\ref{tab:skewed_power} confirms this: power for the three linear model met
 \label{fig:skewed_sim_power}
 \end{figure}
 
-\begin{center}
-\input{fig/skewed_simulation_power_summary.tex}
-\end{center}
-
+%\begin{center}
+%\input{fig/skewed_simulation_power_summary.tex}
+%\end{center}
+\begin{table}[]
+\centering
+\label{tab:skewed_power}
+\begin{tabular}{ll|ccccc}
+\multicolumn{2}{c|}{Design}                                                               & \multicolumn{5}{c}{$p$-value}                                                                                                                                                                                                                                                                                                                                           \\ \hline
+Group sizes                 & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end{tabular} & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Differenced\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
+\multirow{3}{*}{Balanced}   & None                                                        & 0.036                      & 0.025                                                                                & 0.021                                                                                 & 0.035                                                                        & 0.037                                                                        \\
+                            & Constant                                                    & 0.974                      & 0.143                                                                                & 0.853                                                                                 & 0.972                                                                        & 0.977                                                                        \\
+                            & Single stratum                                              & 0.422                      & 0.050                                                                                & 0.275                                                                                 & 0.429                                                                        & 0.424                                                                        \\ \hline
+\multirow{3}{*}{Imbalanced} & None                                                        & 0.038                      & 0.024                                                                                & 0.019                                                                                 & 0.037                                                                        & 0.039                                                                        \\
+                            & Constant                                                    & 0.971                      & 0.147                                                                                & 0.860                                                                                 & 0.970                                                                        & 0.972                                                                        \\
+                            & Single stratum                                              & 0.190                      & 0.070                                                                                & 0.100                                                                                 & 0.190                                                                        & 0.190                                                                        \\ \hline
+\end{tabular}
+\caption{Empirical power at level $0.05$ for discrete, skewed simulated data} 
+\end{table}
 It makes sense that in all of these simulations, the permutation test using the change scores as the response measure is more powerful than the permutation test using the raw outcomes.
 The baseline and outcome are highly correlated, so the change score has lower variance the outcome alone.
 In additional simulations, 
@@ -519,10 +569,27 @@ The parametric test has comparable or slightly higher power than the other permu
 \label{fig:clinical_distr}
 \end{figure}
 
+%
+%\begin{center}
+%\input{fig/results_pvalue_summary.tex}
+%\end{center}
 
-\begin{center}
-\input{fig/results_pvalue_summary.tex}
-\end{center}
+\begin{table}[]
+\centering
+\label{tab:clinical_pvalues}
+\begin{tabular}{l|cccc}
+Endpoint      & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
+heart\_freq   & 0.035                      & 0.006                                                                                & 0.080                                                                        & 0.082                                                                        \\
+regurg\_freq  & 0.136                      & 0.118                                                                                & 0.280                                                                        & 0.220                                                                        \\
+dysp\_freq    & 0.565                      & 0.948                                                                                & 0.616                                                                        & 0.592                                                                        \\
+daily\_heart & 0.032                      & 0.004                                                                                & 0.056                                                                        & 0.068                                                                        \\
+daily\_regur  & 0.142                      & 0.174                                                                                & 0.286                                                                        & 0.246                                                                        \\
+daily\_hrdq   & 0.043                      & 0.012                                                                                & 0.088                                                                        & 0.098                                                                        \\
+daily\_dysp   & 0.582                      & 0.810                                                                                & 0.756                                                                        & 0.722                                                                        \\
+\hline
+\end{tabular}
+\caption{Comparison of p-values from four tests, for each continuous endpoint.} 
+\end{table}
 
 \section{Discussion}
 % This section should discuss the implications of the findings in context of existing research and highlight limitations of the study.
