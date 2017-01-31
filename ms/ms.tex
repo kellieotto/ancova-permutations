@@ -166,27 +166,23 @@ University of Padova
 
 
 \begin{abstract}
-\parttitle{Background}
-In clinical trials, the standard method of measuring the effectiveness of one treatment over another is parametric analysis of covariance (ANCOVA), a special case of linear regression which incorporates stratification.
-The hypothesis test is derived based on strong, untestable assumptions about the data-generating process such as a constant treatment effect across groups and Gaussian, homoskedastic random errors.
-The effectiveness of the treatment is decided by the $p$-value from this hypothesis test, which may not be valid if the assumptions for ANCOVA are not met.
-We would like to understand which assumptions may be relaxed or violated for the ANCOVA to remain valid (but potentially less powerful).
-
-\parttitle{Methods}
-Permutation tests are a nonparametric hypothesis test and require only minimal assumptions which are often guaranteed by the randomization that was conducted.
-In contrast to parametric tests, which rely up on strong assumptions to obtain a null distribution with a simple closed form, one uses the assumption of exchangeability or randomization to simulate approximate null distributions for permutation tests.
-These tests are exact, even in finite samples.
-We compare ANCOVA to several permutation tests based on linear models, which control for pretreatment covariates to increase power and precision.
-
-\parttitle{Results}
-We simulate randomized trials using a variety of data-generating processes, some of which violate the parametric ANCOVA assumptions.
+%\parttitle{Background}
+Statistical test of treatment effects based on the linear model, such as analysis of variance (ANOVA) and analysis of covariance (ANCOVA), are widely accepted by organizations that regulate clinical trials.
+In this paper, we focus on ANCOVA, a special case of linear regression which incorporates stratification.
+Traditional ANCOVA is derived using strong assumptions about the data-generating process so that the resulting inference is based on parametric distributions.
+Because these methods are well understood and robust, they are sometimes applied to data that depart from the method's assumptions, such as ordinal integer scores.
+Given the considerable costs and scientific importance of clinical trials, it is desirable to include an additional methodology which is potentially more robust to departures from assumptions as a check on the statistical inference for the main study endpoints.
+%\parttitle{Methods}
+Permutation tests are a nonparametric alternative that require only minimal assumptions which are often guaranteed by the randomization that was conducted.
+In contrast to parametric tests, which rely up on strong assumptions to obtain a null distribution with a simple closed form, permutation tests use the assumption of exchangeability or randomization to obtain null distributions directly by considering what would have been observed under different possible randomizations.
+We compare parametric ANCOVA to several permutation tests based on linear models, which control for pretreatment covariates to increase power and precision.
+%\parttitle{Results}
+We simulate randomized trials using a variety of data-generating processes, some of which violate the parametric assumptions.
 The permutation tests based on linear models maintain power comparable to the ANCOVA in every case.
 We illustrate the use of these permutation tests alongside the parametric ANCOVA with data from a clinical trial conducted across eight sites,
 each having a different numbers of patients.
-
-\parttitle{Conclusions}
-These results suggest that the parametric ANCOVA and linear model permutation tests perform similarly, even when not all assumptions for the parametric test are met.
-
+%\parttitle{Conclusions}
+These results suggest that a linear model permutation test may serve as a secondary analysis to give strength to the statistical inferences from the primary analyses of a clinical data study.
 
 \end{abstract}
 
@@ -231,8 +227,9 @@ if individuals are heterogeneous before the study, then their outcomes may diffe
 there may be more than two treatments under study;
 patients may not take the treatment they are assigned or may drop out of the study;
 and an individual's assignment to treatment may affect others' outcomes.
-Techniques have been developed to deal with each of these issues, but solutions are rarely as simple as an asymptotic normality argument.
-In this paper, we focus on the first question of heterogeneity and assume that the others do not affect the study.
+Techniques have been developed to deal with each of these issues, invoking additional assumptions in order to carry out valid inference.
+%For any particular dataset, it is difficult to determine to what extent the assumptions for asymptotic normality are satisfied.
+In this paper, we focus on the issue of heterogeneity of pretreatment characteristics and assume that the other issues are not present.
 
 Random assignment of treatment ensures that pretreatment covariates are balanced between treatment groups on average, across all possible randomizations.
 However, in any particular randomization, there may be imbalances.
@@ -265,7 +262,9 @@ Hypothesis testing of estimated coefficients requires even stronger assumptions 
 When this holds, a regression coefficient scaled by its estimated variance follows Student's $t$ distribution.
 Thus, if we believe the linear model is correctly specified, a hypothesis test for a treatment effect amounts to a hypothesis test of the coefficient for treatment in the ANCOVA model can be evaluated analytically and quickly.
 However, the modeling assumptions are clearly violated in many cases:
-when the data are discrete or ordinal, when the treatment has a differential effect across strata, and when measurement error sizes differ across strata.
+when the data are discrete or ordinal, 
+when the treatment has a differential effect across subgroups of individuals and no interaction terms are included, 
+and when measurement error sizes differ across strata.
 Furthermore, the hypothesis test implicitly assumes that the data were sampled at random from some underlying population, when in fact,
 medical experimenters rarely recruit patients this way (\cite{ludbrook_why_1998}).
 
@@ -280,8 +279,9 @@ This may be acceptable when the individuals who make up the sample are not repre
 
 In the past, parametric tests were necessary because asymptotic approximations were the only computationally feasible way to estimate distributions. 
 Now, computational power is no longer a barrier to finding exact (or exact to pre-specified precision) randomization distributions.
-In most cases, a randomization test is preferable to a parametric one:
+In most cases, a randomization test is the ``gold standard'':
 ``[a] corresponding parametric test is valid only to the extent that it results in the same statistical decision [as the randomization test]'' (\cite{bradley_distribution_1968}).
+Therefore, when conducting creating estimates and confidence intervals using parametric methods, one may have greater confidence in the results when the decision to accept or reject the null hypothesis is the same for the parametric and permutation tests.
 
 There is no hard and fast rule describing the rate at which parametric tests approach the exact permutation solution, as they are both highly dependent on the particular data observed.
 On the one hand, some argue that violations of parametric test assumptions necessitate the use of permutation methods.
