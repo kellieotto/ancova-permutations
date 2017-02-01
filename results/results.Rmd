@@ -9,7 +9,8 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE, 
                       message = FALSE,
                       warning = FALSE,
-                      tidy = TRUE, tidy.opts = list(width.cutoff = 60),
+                      tidy = TRUE, 
+                      tidy.opts = list(width.cutoff = 60),
                       cache = TRUE)
 #devtools::install_github("statlab/permuter")
 require(permuter)
@@ -33,18 +34,18 @@ clinical <- read.csv("../data/clinical_cleaned.csv", header = TRUE, stringsAsFac
 We preprocessed the data from its original format in the file "data/clinical_cleaned.R" so that it would be sufficiently anonymized.
 We took the following steps:
 
-* Initially, there were 188 subjects. 52 of these were never assigned to a treatment group and were only observed at baseline. This ensures that censoring was independent of treatment, so removing them from the analysis does not introduce any selection bias. We are left with 66 subjects in group A and 70 subjects in group B.
 * We renamed treatments, subject IDs, and site IDs to remove identifying information.
+* Initially, there were 188 subjects. 52 of these were never assigned to a treatment group and were only observed at baseline. Because censoring occurred before treatment assignment, we are guaranteed that censoring and treatment are independent. Removing these individuals from the analysis does not introduce any selection bias. After removing the 52 people with missing data, we are left with 66 subjects in group A and 70 subjects in group B.
 * Each individual was observed for a total of 14 days, 7 during the baseline week and 7 after receiving treatment.  We averaged the 7 measurements taken during each of these time periods, leaving us with 2 measurements per individual.
 
 # Exploratory Data Analysis
 
-We notice several things patterns from Figure \ref{fig:count_by_site}.
+We notice several things in Figure \ref{fig:count_by_site}.
 Some of the sites have many more subjects than others: these are sites 1, 3, and 6, and 7.
 Sites 2, 5, and 8 have very few subjects, so we will have low power at these sites.
 For example, after removing the missing values, site 8 only has one person in group B and two in group A, so the site will only have 3 unique permutation statistics.
 
-```{r count_by_site, fig.align="center", fig.cap = "Number of subjects in each treatment group, by site ID."}
+```{r count_by_site, fig.align="center", fig.height=6, fig.width=12, fig.cap = "Number of subjects in each treatment group, by site ID."}
 clinical %>% 
   filter(VISITNUM == 1) %>% 
   ggplot(aes(x = factor(SITEID))) + 
@@ -56,7 +57,7 @@ clinical %>%
   theme_bw()
 ```
 
-The data are not in the right shape to analyze a single variable.
+The dataset is not in the right format to analyze a single variable.
 Below, we include a function to take the raw data and reshape it to analyze one variable of interest.
 
 ```{r data_structure}
@@ -64,6 +65,13 @@ Below, we include a function to take the raw data and reshape it to analyze one 
 data_by_subjid_visitnum <- clinical %>% group_by(SUBJID, VISITNUM)
 
 reshape_data <- function(variable, data = data_by_subjid_visitnum){
+  # Reshape data to be analyzed with regression
+  # Inputs:
+  # variable = the clinical endpoint of interest, input as a string
+  # data     = dataset with the variable as a column name, grouped by subject id and visit number
+  #            default is the dataframe we just created, data_by_subjid_visitnum
+  # Output:
+  # A dataframe with a single row per subject and columns for treatment, site ID, baseline + outcome measures
   data <- data %>% mutate_(myvariable = variable)
   cleaned <- dcast(data, SUBJID + tr + SITEID ~ VISITNUM, value.var = "myvariable")
   colnames(cleaned) <- c("SUBJID", "tr", "SITEID", "Baseline", "Outcome")
@@ -76,7 +84,9 @@ reshape_data <- function(variable, data = data_by_subjid_visitnum){
 Figure \ref{fig:hist_continuous_vars} shows the distribution of the final outcome measures between the two treatment groups.
 Based on these distributions, we would expect to detect a difference in outcomes between the treatments for the `daily_heart`, `daily_hrdq`, and `heart_freq` measures.
 
-```{r hist_continuous_vars, fig.height=6, fig.width=12, fig.cap = "Distribution of continuous outcomes"}
+```{r hist_continuous_vars, fig.align="center", fig.height=6, fig.width=12, fig.cap = "Comparison of the distributions of the seven continuous clinical endpoints during week 2 for the two treatment groups."}
+
+# Create a plot for each variable, store in a list
 continuous_vars <- c("daily_heart", "daily_regurg", "daily_dysp", 
                     "daily_hrdq",
                     "heart_freq", "regurg_freq", "dysp_freq")
@@ -84,10 +94,6 @@ plot_distrs <- lapply(continuous_vars, function(variable){
   p <- reshape_data(variable) %>% mutate(tr = factor(tr)) %>%
         ggplot(aes(Outcome)) +
         geom_density(alpha = 0.6, aes(fill = tr))+ 
-#        geom_histogram(binwidth = 0.5, position = "dodge", aes(fill = tr)) +
-#        scale_fill_discrete(name="Experimental\nCondition",
-#                       breaks=c("0", "1"),
-#                       labels=c("A", "B")) + 
         labs(x = variable, fill = "Treatment") +
         theme_bw() +
         theme(
@@ -102,6 +108,7 @@ plot_distrs <- lapply(continuous_vars, function(variable){
   return(p)
 })
 
+# Move the legend
 tmp <- ggplot_gtable(ggplot_build(plot_distrs[[1]]))
 leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
 legend <- tmp$grobs[[leg]]
@@ -109,39 +116,52 @@ legend <- tmp$grobs[[leg]]
 plot_distrs <- lapply(plot_distrs, function(x) x + theme(legend.position="none"))
 plot_distrs[[length(plot_distrs)+1]] <- legend
 
+# Save figure for paper
 pdf("../ms/fig/clinical_distr.pdf", width = 8, height = 4)
 do.call(grid.arrange, c(plot_distrs, nrow = 2))
 dev.off()
+
+# Print figure
 do.call(grid.arrange, c(plot_distrs, nrow = 2))
 ```
 
-# Analysis - Primary endpoint
-To illustrate the different methods, let's first restrict attention to the primary endpoint, `daily_hrdq`.
-Throughout, we compare two models: 
-the first model considers the final outcome measure, adjusting for site ID and perhaps also the baseline score.
-The second model considers the difference between outcome and baseline score as its dependent variable, adjusting for site ID.
-
-We compare four testing methods: 
-the usual parametric ANCOVA,
-a permutation test considering the difference in means as test statistic, stratifying by site,
-the stratified permutation test, using the $t$-statistic from the linear regression instead,
-and a permutation test in the style of Freedman and Lane (1983), using a linear regression to adjust for covariates.
-
+The primary endpoint is `daily_hrdq`, a measure derived from other variables that were measured in the survey.
+We show summary statistics for this outcome for each treatment group below.
 ```{r hrdq, results = "asis"}
 daily_hrdq <- reshape_data("daily_hrdq")
 summary_stats_hrdq <- cbind(summary(daily_hrdq$difference[daily_hrdq$tr == "B"]),
                             summary(daily_hrdq$difference[daily_hrdq$tr == "A"]))
 colnames(summary_stats_hrdq) <- c("B", "A")
 print(xtable(summary_stats_hrdq,
-             caption = "Summary statistics for change in primary endpoint (daily hrdq) for the two treatment groups."),
+             caption = "Summary statistics for change in primary 
+                        endpoint (daily hrdq) for the two treatment groups."),
       include.rownames = TRUE)
 ```
+
+
+# Analysis - Primary endpoint
+To illustrate the different methods, let's first restrict attention to the primary endpoint, `daily_hrdq`.
+Throughout this section, we compare two models which both control for site ID.
+The first model uses the outcome in week two as the dependent variable, controlling for the baseline score in the models with covariates.
+The second model uses the difference between outcome and baseline score as its dependent variable.
+The difference in the two models is how we control for the baseline measure.
+
+We compare four testing methods: 
+
+1. the usual parametric ANCOVA,
+2. a permutation test, where the difference in means is the test statistic and permutations are stratified by site,
+3. a variation of this stratified permutation test, using the $t$-statistic from linear regression instead, and 
+4. a stratified permutation test in the style of Freedman and Lane (1983), using a linear regression to adjust for covariates.
 
 ## Parametric ANCOVA
 First, we do a standard parametric ANCOVA using the two models.
 Under model 1, using the outcome as response and adjusting for the baseline value, treatment has a significant effect.
 Under model 2, the significance goes away.
-(Note that treatment is still coded as A and B, which are characters. The `lm` function is smart enough to know that it should be coded as a factor, where we compare the effect of B relative to A. In general, be very careful when you're doing this!)
+(Note that treatment is still coded as A and B with the character type. 
+The `lm` function is smart enough to know that it should be coded as a factor, where we compare the effect of B relative to A,
+and coerces the variable type from string to factor behind the scenes. 
+Be very careful when you're doing this!
+It is generally safer to change types yourself.)
 ```{r hrdq_parametric, results = "asis"}
 # method 0: parametric ANCOVA
 lm1 <- lm(Outcome ~ Baseline + tr + factor(SITEID), data = daily_hrdq)
@@ -168,29 +188,36 @@ Then, whether individual $i$ received A or B amounts to an arbitrary label.
 Once we observe their response under one treatment, we know what it would have been under the other; namely, it would be the same.
 
 Treatment was completely randomized at each site, independently across sites.
-Assuming that drop-out from the study was independent of treatment assignment (which is true if treatment was blinded and assigned at random), then we may condition on the number of individuals who received A and B at each site.
-Any assignment of treatments which preserves the number of treated and controls at each site is valid and has equal probability of occurring.
-Therefore, by using this principle of equal probabilities and by imputing the unobserved potential outcomes assuming that the null hypothesis is true, we may obtain the permutation distribution of any statistic under the null hypothesis.
+We assume that drop-out from the study was independent of treatment assignment (which is true if treatment was blinded and assigned at random).
+This will be a conditional hypothesis test: we condition on the number of individuals who received A and B at each site.
+This conditioning asserts that any assignment of treatments that preserves the number of treated and controls at each site is valid and has an equal probability of occurring.
+Therefore, using this principle of equal probabilities and by imputing the unobserved potential outcomes assuming that the null hypothesis is true, we can compute the permutation distribution of any statistic under the null hypothesis.
 
-We compare two test statistics: the usual difference in means between group B and group A, and the difference in means within each site, aggregated by taking the sum of their absolute values over sites.
+We compare two test statistics: the difference in mean outcomes for group B and mean outcomes for group A, and this difference of means within each individual site, aggregated over sites by taking the sum of their absolute values.
 The first statistic is more comparable to what one would obtain from an ANCOVA and it is readily interpretable.
 It does not directly account for the stratification by site, so variation between sites may be hidden.
-The second statistic is useful for testing the two-sided alternative hypothesis that treatment has some effect. 
+The second statistic is useful for testing the two-sided alternative hypothesis that treatment has _some_ nonzero effect. 
 It may be more powerful than the simple difference in means if the effect of the drug varies across sites.
-For instance, if the drug has a positive effect at one site but a negative effect at another site, this test statistic would be large; 
-if we used the simple difference in means without accounting for sites, then the positive effect and negative effect may cancel each other out and appear as no effect.
+For instance, if the drug has a positive effect at one site but a negative effect at another site, this test statistic would be large.
+If we used the simple difference in means without accounting for sites, then the positive effect and negative effect may cancel each other out;
+the difference in means will be attenuated toward zero.
 
-Figure \ref{fig:hrdq_unadjusted_permutation} shows the permutation distributions of the simple difference in means.
+Figure \ref{fig:hrdq_unadjusted_permutation} shows the permutation distributions of the simple difference in means for the two models.
 Figure \ref{fig:hrdq_unadj_perm_withinstrata} shows the permutation distribution of the absolute value of the difference of means within strata, summed across strata.
+These empirical permutation distributions are computed by randomly permuting treatment assignments within each site $10^4$ times and computing the statistic for each permutation.
+The vertical line shows the observed value of the test statistic.
+The $p$-value is two times the area of the permutation distribution to the right of the observed value;
+it is the probability of observing a value at least as extreme (falling that far away from the center of the distribution) as the observed value.
 There are several points to notice:
+
 * The second test is far less powerful than the first.  This is likely because some sites had very few patients.  These sites have correspondingly few unique permutations, and so they often contribute the same amount to the summed difference in means statistic.  It is impossible to detect a difference at small significance levels when there are only 3 patients.
 * The summed difference of means only makes sense for testing against a two-sided alternative, since taking the absolute value removes the sign of the effect. The permutation distribution is strictly non-negative and skewed to the right.
 * This statistic is less interpretable than the difference in means because it doesn't correspond directly to any feature of the distribution of outcomes.
 
-Since the summed difference in means statistic has such lower power, we abandon it for the rest of the analyses.
+Since the summed difference in means statistic has such low power, we abandon it in the rest of the analyses.
 
 
-```{r hrdq_unadjusted_permutation, fig.height = 3, fig.cap = "Permutation distribution of the difference of means for daily_hrdq"}
+```{r hrdq_unadjusted_permutation, fig.align="center", fig.height = 3, fig.cap = "Permutation distribution of the difference of means for daily hrdq"}
 # method 1 : do permutation of differences
 observed_diff_means1 <- mean(daily_hrdq[daily_hrdq$tr == "B", ]$Outcome) - mean(daily_hrdq[daily_hrdq$tr == "A", ]$Outcome)
 diff_means_distr1 <- stratified_two_sample(group = daily_hrdq$tr, response = daily_hrdq$Outcome, stratum = daily_hrdq$SITEID, reps = 1e4)
@@ -203,20 +230,22 @@ diff_means_pvalue2 <- t2p(observed_diff_means2, diff_means_distr2, alternative =
 
 
 data.frame("perm" = c(diff_means_distr1, diff_means_distr2),
-           "model" = c(rep("Outcome", length(diff_means_distr1)), 
-                       rep("Differenced", length(diff_means_distr2))),
+           "model" = c(rep("Raw Outcome Model", length(diff_means_distr1)), 
+                       rep("Differenced Model", length(diff_means_distr2))),
            "xintercept" = c(rep(observed_diff_means1, length(diff_means_distr1)),
                             rep(observed_diff_means2, length(diff_means_distr2)))) %>%
   ggplot(aes(x = perm, fill = model)) +
   geom_histogram() +
   facet_grid(~model) +
   geom_vline(aes(xintercept = xintercept)) +
-  theme_bw()
+  theme_bw() +
+  labs(x = "Difference in Means Statistic", y = "Frequency") +
+  theme(legend.position = "none")
 
 
 ```
 
-```{r hrdq_unadj_perm_withinstrata, fig.height = 3, fig.cap = "Permutation distribution of the difference of means within strata, summed across strata, for daily_hrdq"}
+```{r hrdq_unadj_perm_withinstrata, fig.align="center", fig.height = 3, fig.cap = "Permutation distribution of the difference of means within strata, summed across strata, for daily hrdq"}
 
 obs_diff_means_bystrata1 <- sum(abs(within_group_mean(group = daily_hrdq$tr, 
                                                       response = daily_hrdq$Outcome,
@@ -239,19 +268,21 @@ diff_means_bystrata_pvalue2 <- t2p(obs_diff_means_bystrata2, diff_means_distr_by
 
 
 data.frame("perm" = c(diff_means_distr_bystrata1, diff_means_distr_bystrata2),
-           "model" = c(rep("Outcome", length(diff_means_distr_bystrata1)), 
-                       rep("Differenced", length(diff_means_distr_bystrata2))),
+           "model" = c(rep("Raw Outcome Model", length(diff_means_distr_bystrata1)), 
+                       rep("Differenced Model", length(diff_means_distr_bystrata2))),
            "xintercept" = c(rep(obs_diff_means_bystrata1, length(diff_means_distr_bystrata1)),
                             rep(obs_diff_means_bystrata2, length(diff_means_distr_bystrata2)))) %>%
   ggplot(aes(x = perm, fill = model)) +
   geom_histogram() +
   facet_grid(~model) +
   geom_vline(aes(xintercept = xintercept)) +
-  theme_bw()
+  theme_bw() +
+  labs(x = "Summed Difference in Means Statistic", y = "Frequency") +
+  theme(legend.position = "none")
 ```
 
 ## Covariate-adjusted permutation test
-We would like to test for a difference in outcomes between the treatment groups group, but control for other covariates.
+We would like to test for a difference in outcomes between the treatment groups, but control for other covariates.
 In particular, when the outcome is the average response during the second week of follow-up, we would like to control for the average response during the first week of follow-up and the location.
 When the outcome is the difference in responses between the second and first weeks, we would just like to control for location.
 We will use the approximate permutation test derived by Freedman and Lane (1983) to do so.
@@ -263,16 +294,17 @@ $$ Y = \beta_0 + \beta_1 X + \beta_2 Z + \varepsilon$$
 
 Under the sharp null $H_0$, $Z$ has no effect on $Y$.
 In other words, the null hypothesis is that $\beta_2 = 0$.
-In a randomized experiment such as this, there are two ways we may test this null hypothesis.
+In a randomized experiment like this, several variables are exchangeable.
+We will show two different permutation tests that exploit exchangeability of different variables.
 
 ### Standard linear model
-First, we may permute the treatment assignments $Z$ directly.
+
 Treatment was assigned at random within each site.
 This ensures that $Z$ and $\varepsilon$ are statistically independent, conditional on site.
 Therefore, we may conduct a test by permuting treatment assignments $Z$ within site, independently across sites, and calculating a test statistic for each such permutation.
 We choose to use the $t$ statistic from the linear model as the test statistic.
 
-```{r tr_permutation, fig.height = 3, fig.cap = "Permutation distribution of the stratified permutation test between daily_hrdq and treatment after controlling for covariates in a linear model."}
+```{r tr_permutation, fig.align = "center", fig.height = 3, fig.cap = "Permutation distribution of the stratified permutation test between daily hrdq and treatment after controlling for covariates in a linear model."}
 # method 2 : linear model
 
 observed_t1 <- summary(lm1)[["coefficients"]]["trB", "t value"]
@@ -296,18 +328,17 @@ lm_pvalue_2 <- t2p(observed_t2, lm2_t_distr, alternative = "two-sided")
 
 
 data.frame("perm" = c(lm1_t_distr, lm2_t_distr),
-           "model" = c(rep("Outcome", length(lm1_t_distr)), 
-                       rep("Differenced", length(lm2_t_distr))),
+           "model" = c(rep("Raw Outcome Model", length(lm1_t_distr)), 
+                       rep("Differenced Model", length(lm2_t_distr))),
            "xintercept" = c(rep(observed_t1, length(lm1_t_distr)),
                             rep(observed_t2, length(lm2_t_distr)))) %>%
   ggplot(aes(x = perm, fill = model)) +
   geom_histogram() +
   facet_grid(~model) +
   geom_vline(aes(xintercept = xintercept)) +
-  xlab("t Statistic") +
-  ylab("Frequency") +
-  ggtitle("Permutation Distributions") +
-  theme_bw()
+  theme_bw() +
+  labs(x = "t Statistic", y = "Frequency") +
+  theme(legend.position = "none")
 ```
 
 
@@ -318,13 +349,12 @@ data.frame("perm" = c(lm1_t_distr, lm2_t_distr),
 Let's take an alternative view of the problem.
 We still write $Y = \beta_0 + \beta_1 X + \beta_2 Z + \varepsilon$.
 However, now, we do not treat the $\varepsilon$ as random.
-They are simply defined to be the diffence between $Y$ and the data's linear projection onto the plane $\beta_0 + \beta_1 X + \beta_2 Z$.
+They are simply defined to be the difference between $Y$ and the data's linear projection onto the plane $\beta_0 + \beta_1 X + \beta_2 Z$.
 
 If the null hypothesis is true, then $\varepsilon = Y - \beta_0 - \beta_1X$.
 Therefore, we may estimate the errors $\hat{\varepsilon}$ by $Y - \hat{Y}$, where $\hat{Y}$ is obtained by regressing $Y$ on $X$ but not $Z$.
-They approximate the true errors $\varepsilon$ from the equation $Y = \beta_0 + \beta_1 X + \beta_2 Z + \varepsilon$.
 The $\varepsilon$ are orthogonal to $X$ and $Z$.
-Therefore, within sites, these estimated $\hat{\varepsilon}$ are approximately exchangeable.
+Assuming that the $\hat{\varepsilon}$ are ``close'' to $\varepsilon$, thenthese estimated $\hat{\varepsilon}$ are approximately exchangeable within sites.
 
 We construct a permutation distribution using several steps:
 
@@ -335,20 +365,15 @@ We construct a permutation distribution using several steps:
 
 
 For this dataset, we are guaranteed that treatment $Z$ is independent of $\varepsilon$, as it is randomized within site.
-We should also check that site ID is uncorrelated with $\hat{varepsilon}$.
-If not, then the $\hat{\varepsilon}$ are not exchangeable across sites.
-However, our permutations are done within sites, so even if this is violated, there is not a big issue.
 We check these associations using residual plots in Figure \ref{fig:residual_plots}.
 Indeed, the distribution of residuals looks nearly equal between treatment groups in both models.
 The distribution of residuals varies a bit across sites, but they all appear roughly centered around 0.
 Sites 4 and 5 have larger variance in the differenced model.
-As mentioned, this should not be an issue since we permute treatments within sites, independently across sites.
+This should not be an issue since we permute treatments within sites, independently across sites.
 (In general, when treatment is not randomly assigned, this condition is necessary for the permutation test to be valid.)
 
 
-```{r residual_plots, echo = FALSE, message = FALSE, fig.height = 5, fig.cap = "Residual plots of the linear regression of daily_hrdq on treatment and covariates."}
-# Residual plots to check that treatment and covariates are uncorrelated with errors
-
+```{r residual_plots, echo = FALSE, message = FALSE, fig.align = "center", fig.height = 5, fig.cap = "Residual plots of the linear regression of daily hrdq on treatment and covariates. These are done to check that treatment and covariates are uncorrelated with the regression errors for the Freedman and Lane style permutation test."}
 p11 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>% 
   melt(id.vars = c("SUBJID", "tr", "SITEID")) %>%
@@ -358,7 +383,7 @@ p11 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Treatment") + ylab("Residual") + 
-  ggtitle("Outcome Model") +
+  ggtitle("Raw Outcome Model") +
   theme_bw()
 p21 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>%  
@@ -369,7 +394,7 @@ p21 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Site ID") + ylab("Residual") + 
-  ggtitle("Outcome Model") +
+  ggtitle("Raw Outcome Model") +
   theme_bw()
 p12 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>% 
@@ -380,7 +405,7 @@ p12 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Treatment") + ylab("Residual") +
-  ggtitle("Differences Model") +
+  ggtitle("Differenced Model") +
   theme_bw()
 p22 <- daily_hrdq %>% 
   select(-Baseline, -Outcome, -difference) %>%  
@@ -391,13 +416,13 @@ p22 <- daily_hrdq %>%
   ylim(-2.25, 2.25)+
   geom_hline(yintercept = 0, linetype = "dashed") +
   xlab("Site ID") + ylab("Residual") +
-  ggtitle("Differences Model") +
+  ggtitle("Differenced Model") +
   theme_bw()
 grid.arrange(p12, p11, p22, p21, nrow = 2, ncol = 2)
 ```
 
 
-```{r fl_permutation, fig.height = 3, fig.cap = "Permutation distribution of the Freedman-Lane tests of correlation between daily_hrdq and treatment after controlling for covariates."}
+```{r fl_permutation, fig.align = "center", fig.height = 3, fig.cap = "Permutation distribution of the Freedman-Lane tests of correlation between daily hrdq and treatment after controlling for covariates."}
 # method 3 : freedman lane perm residuals
 
 lm1_no_tr <- lm(Outcome~Baseline + factor(SITEID), data = daily_hrdq)
@@ -438,21 +463,20 @@ data.frame("perm" = c(lm1_t_distr, lm2_t_distr),
   geom_histogram() +
   facet_grid(~model) +
   geom_vline(aes(xintercept = xintercept)) +
-  theme_bw()
+  theme_bw() +
+  labs(x = "t Statistic", y = "Frequency") +
+  theme(legend.position = "none")
 
 
 ```
 
-Table \ref{primary_endpoint_res} shows the p-values for each of the four methods, using the two models (treatment controlling for baseline, and the difference of treatment minus baseline).
-For the models using the treatment measure as the dependent variable, the effect of `daily_hrdq` is significant at the $0.05$ level in two of the five models
-and is significant at the $0.1$ level in four of the five models.
-It is never significant in the models using the difference from baseline to treatment.
+Table 2 shows the $p$-values for each of the four methods and the two models.
+For the models using the raw outcome measure as the dependent variable, the effect of `daily_hrdq` is significant at the $0.05$ level in two of the five tests
+and is significant at the $0.1$ level in four of the five tests.
+It is never significant in the models using the difference from baseline to outcome.
 As expected, the stratified permutation test using the sum of differences in means across sites has low power.
-We restrict our attention to the model using treatment measurement and controlling for the baseline, as this is what RB's original analysis does.
-Now, we run this procedure for all continuous variables.
-Table \ref{primary_endpoint_res} shows the results.
 
-```{r primary_endpoint_res, results = "asis", fig.cap = "Comparison of p-values for two measures (average outcome during treatment vs. difference of average outcome and average baseline) of the primary endpoint."}
+```{r primary_endpoint_res, results = "asis", fig.align = "center", fig.cap = "Comparison of $p$-values for two measures (average outcome during treatment vs. difference of average outcome and average baseline) of the primary endpoint."}
 
 outcome_pvalues <- c(summary(aov(lm1))[[1]]["trB", "Pr(>F)"],
                      diff_means_pvalue1,
@@ -466,15 +490,25 @@ differenced_pvalues <- c(summary(aov(lm2))[[1]]["trB", "Pr(>F)"],
                      fl_pvalue_2)
 pvalues_table <- cbind(differenced_pvalues, outcome_pvalues)
 
-tests <- c("Parametric ANCOVA", "Unadjusted permutation", "Unadjusted permutation (summed across strata)", "Linear regression permutation", "Residual permutation")
+tests <- c("Parametric ANCOVA", "Unadjusted permutation", 
+           "Unadjusted permutation (summed across strata)", 
+           "Linear regression permutation", "Residual permutation")
 rownames(pvalues_table) <- tests
 colnames(pvalues_table) <- c("Differences", "Outcome") 
 
 print(xtable(pvalues_table, digits = 3,
-             caption = "Comparison of p-values for two measures (average outcome during treatment vs. difference of average outcome and average baseline) of the primary endpoint."),
+             caption = "Comparison of $p$-values for two 
+             measures (average outcome during treatment 
+             vs. difference of average outcome and average
+             baseline) of the primary endpoint."),
       include.rownames = TRUE)
 ```
 
+# Analysis - Secondary endpoints
+
+We restrict our attention to the model using treatment measurement and controlling for the baseline, as this is what RB's original analysis does.
+We run this procedure for all seven continuous endpoints.
+Table 3 shows the results.
 
 ```{r results_table_make}
 set.seed(919547773) # Generated on Random.org Timestamp: 2016-11-09 15:39:29 UTC
@@ -483,7 +517,7 @@ continuous_vars <- c("heart_freq", "regurg_freq", "dysp_freq",
                     "daily_heart", "daily_regurg", "daily_hrdq",
                     "daily_dysp")
 
-tests <- c("Parametric ANCOVA", "Stratified permutation", "LM permutation", "Residual permutation")
+tests <- c("ANCOVA", "Stratified perm", "LM perm", "Residual perm")
 pvalues_table_contin <- as.data.frame(matrix(NA, nrow = length(continuous_vars), ncol = 4))
 i <- 0
 
@@ -519,18 +553,19 @@ for(col in continuous_vars){
   pvalues_table_contin[i, 4] <- t2p(observed_t, lm_t_distr, alternative = "two-sided")
 }
 ```
-```{r results_table_print, results = "asis", fig.cap = "Comparison of p-values from four tests, for each continuous endpoint."}
+```{r results_table_print, results = "asis", fig.align = "center", fig.cap = "Comparison of $p$-values from four tests, for each continuous endpoint."}
 rownames(pvalues_table_contin) <- continuous_vars
 colnames(pvalues_table_contin) <- tests
 
 
 summarytab <- xtable(pvalues_table_contin, 
              digits = 3,
-             align = paste0(c("r|", rep("p{1.2in}", ncol(pvalues_table_contin))), 
+             align = paste0(c("r|", rep("p{1in}", ncol(pvalues_table_contin))), 
                             collapse = ""),
-             caption = "Comparison of p-values from four tests, for each continuous endpoint.",
+             caption = "Comparison of $p$-values from four tests, for each continuous endpoint.",
              label = "tab:clinical_pvalues")
 print(summarytab, include.rownames = TRUE)
 
-print(summarytab, include.rownames = TRUE, type="latex", file="../ms/fig/results_pvalue_summary.tex") 
+print(summarytab, include.rownames = TRUE, type="latex", 
+      file="../ms/fig/results_pvalue_summary.tex") 
 ```
