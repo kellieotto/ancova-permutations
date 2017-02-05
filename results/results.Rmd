@@ -153,6 +153,12 @@ We compare four testing methods:
 3. a variation of this stratified permutation test, using the $t$-statistic from linear regression instead, and 
 4. a stratified permutation test in the style of Freedman and Lane (1983), using a linear regression to adjust for covariates.
 
+The permutation tests rely on the `permuter` R package.  If you haven't installed it, you should run the following command:
+
+```{r download_permuter, eval = FALSE}
+devtools::install_github("statlab/permuter")
+```
+
 ## Parametric ANCOVA
 First, we do a standard parametric ANCOVA using the two models.
 Under model 1, using the outcome as response and adjusting for the baseline value, treatment has a significant effect.
@@ -353,8 +359,7 @@ They are simply defined to be the difference between $Y$ and the data's linear p
 
 If the null hypothesis is true, then $\varepsilon = Y - \beta_0 - \beta_1X$.
 Therefore, we may estimate the errors $\hat{\varepsilon}$ by $Y - \hat{Y}$, where $\hat{Y}$ is obtained by regressing $Y$ on $X$ but not $Z$.
-The $\varepsilon$ are orthogonal to $X$ and $Z$.
-Assuming that the $\hat{\varepsilon}$ are ``close'' to $\varepsilon$, thenthese estimated $\hat{\varepsilon}$ are approximately exchangeable within sites.
+Assuming that the $\hat{\varepsilon}$ are ``close'' to $\varepsilon$, then these estimated $\hat{\varepsilon}$ are approximately exchangeable within sites.
 
 We construct a permutation distribution using several steps:
 
