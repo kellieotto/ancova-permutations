@@ -33,12 +33,13 @@
 
 \if0\blind
 {
-  \title{\bf A Comparison of Parametric and Permutation Tests for Regression Analysis of Randomized Control Trials}
+  \title{\bf A Comparison of Parametric and Permutation Tests for Regression Analysis of Randomized Experiments}
 \author{Kellie Ottoboni \\
 Department of Statistics; Berkeley Institute for Data Science\\
-University of California, Berkeley \\ 
+University of California, Berkeley \\ [.1in]
 Fraser Lewis \\
-RB\\ 
+Medical Affairs and Evidence Generation \\
+Reckitt Benckiser\\  [.1in]
 Luigi Salmaso\\
 Department of Management and Engineering \\
 University of Padova
@@ -75,7 +76,7 @@ Given the considerable costs and scientific importance of clinical trials, one m
 \vfill
 
 \newpage
-%\spacingset{1.45} % DON'T change the spacing!
+\spacingset{1.45} % DON'T change the spacing!
 \section{Background}
 A hypothesis test is a statistical method for determining whether observed data is consistent with a belief about the process that generated the data.
 Medical experiments use hypothesis testing to assess the evidence that a treatment affects one or more clinically relevant outcomes.
@@ -89,7 +90,6 @@ there may be more than two treatments under study;
 patients may not take the treatment they are assigned or may drop out of the study;
 and an individual's assignment to treatment may affect others' outcomes.
 Techniques have been developed to deal with each of these issues, invoking additional assumptions in order to carry out valid inference.
-%For any particular dataset, it is difficult to determine to what extent the assumptions for asymptotic normality are satisfied.
 In this paper, we focus on the issue of heterogeneity of pretreatment characteristics and assume that the other issues are not present.
 
 Random assignment of treatment ensures that pretreatment covariates are balanced between treatment groups on average, across all possible randomizations.
@@ -143,7 +143,7 @@ In the past, parametric methods were necessary because asymptotic approximations
 Now, computational power is no longer a barrier to finding exact (or exact to pre-specified precision) randomization distributions, though they remain the most common way of constructing confidence intervals.
 In most cases, a randomization test is the ``gold standard'':
 ``[a] corresponding parametric test is valid only to the extent that it results in the same statistical decision [as the randomization test]'' (\cite{bradley_distribution_1968}).
-If the permutation test agrees with the parametric test, one may have a greater degree of confidence in the estimates and confidence intervals that come from the parametric method.
+If the permutation test agrees with the parametric test, one may have a greater degree of confidence in the estimates and confidence intervals constructed using the parametric method.
 
 There is no hard and fast rule describing the rate at which parametric tests approach the exact permutation solution, as they are both highly dependent on the particular data observed.
 On the one hand, some argue that violations of parametric test assumptions necessitate the use of permutation methods.
@@ -156,14 +156,16 @@ Medical trials often use Likert scales to score pain or symptom severity, result
 However, \cite{winter_five-point_2010} found that the two sample $t$ test and Mann-Whitney test had comparable Type I and II error rates for five-point Likert scale data, suggesting that the violation of normality does not entirely invalidate the parametric test.
 \cite{vickers_parametric_2005} compared the parametric ANCOVA to the Mann-Whitney rank test in the context of randomized experiments, finding that except in extreme situations, ANCOVA was more powerful than the nonparametric test.
 Most similar to our question of study, \cite{anderson_empirical_1999} found little difference between several permutation tests for coefficients in a linear model alongside the parametric $t$ test.
+In these situations, the permutation test strengthens conclusions by giving evidence that the parametric test is robust to departures from its assumptions.
 
 In this paper, we review several hypothesis tests for a treatment effect which adjust for pretreatment covariates to increase power.  
 We focus on ANCOVA and its permutation counterparts, comparing their performance in different scenarios and illustrating their application with a clinical dataset.
-We find in simulations that even when assumptions are not satisfied, the parametric and permutation tests have comparable power to detect a treatment effect.
-We apply each of the methods to data from a clinical trial which assessed the performance of two treatments for gastroesophageal reflux disease (GERD).
-We conclude by discussing implications of these results for practitioners.
+Section~\ref{sec:methods} describes the various tests mathematically and states their assumptions explicitly.
+Section~\ref{sec:simulations} presents simulations that suggest that even when assumptions are not satisfied, the parametric and permutation tests have comparable power to detect a treatment effect.
+In Section~\ref{sec:results}, we apply each of the tests to data from a clinical trial comparing the performance of two treatments for gastroesophageal reflux disease (GERD).
+We conclude in Section~\ref{sec:discussion} with implications of these results for practitioners.
 
-\section{Methods}
+\section{Methods}\label{sec:methods}
 
 \subsection{Notation}
 Suppose we randomly assign two treatments labelled $0$ and $1$ to a group of individuals.
@@ -285,7 +287,7 @@ However, experimenters record additional covariates, some of which may be predic
 One would like to construct a more powerful test by incorporating these covariates to reduce the variance of the statistic.
 The permutation tests in this section continue to model the outcome as in Equation~\ref{eqn:ancova}, but require fewer assumptions about the data.
 In a randomized experiment, the treatment assignment is independent of covariates, errors, and potential outcomes,
-making several variables ``permutable''.
+making several variables ``permutable.''
 We show two permutation tests developed in this framework.
 
 First, we may do a simple variation on the stratified permutation test described above.
@@ -327,14 +329,13 @@ Permutations under the null treat assume that all coefficients are 0 in the true
 Both methods attempt to measure the correlation between treatment and unexplained variation in outcomes, but
 instead of regressing pseudo-outcomes $Y^\pi$ on covariates to obtain a permutation distribution, \cite{kennedy_randomization_1995} recommends using the $t$ statistic from regressing $Z$ on the permuted residuals $\hat{\varepsilon}^\pi$. 
 
-Several authors have compared these tests theoretically and through simulations (\cite{anderson_empirical_1999, anderson_permutation_2001, kennedy_randomization_1996}).
+Several authors have compared these tests theoretically and empirically (\cite{anderson_empirical_1999, anderson_permutation_2001, kennedy_randomization_1996}).
 They find that the Freedman-Lane test of residuals is asymptotically equivalent to the ``oracle'' exact hypothesis test which we could conduct if we knew which permutations of $Y$ given $X$ were equiprobable under the null hypothesis (\cite{anderson_permutation_2001}).
 This confirms empirical results, which show that the Freedman-Lane test performs better than other linear regression based tests in simulations (\cite{anderson_empirical_1999}), though its advantage is small.
 Therefore, throughout the rest of the paper we focus on the two linear regression permutation tests we described in detail: linear regression with permuted treatment assignments and the Freedman-Lane method of permuting residuals.
 
 
-\section{Results}
-\subsection{Simulations}\label{simulations}
+\section{Simulations}\label{sec:simulations}
 
 We simulated data from a randomized experiment using several different data-generating processes.
 We applied the tests to the data and compared their empirical power over repeated random treatment assignments and random errors.
@@ -345,8 +346,7 @@ a stratified permutation test using the difference in mean outcomes
 a stratified permutation test using the mean change scores, defined as the difference between the baseline measure and the outcome (called ``differenced permutation'' in what follows),
 a stratified permutation test based on the $t$ statistic from the linear regression of outcome on control variables (called ``LM permutation'' in what follows),
 and the Freedman-Lane permutation test.
- \todo{supplementary ref}
-
+The simulations are included in three supplementary files.
 
 Outcomes were generated according to the linear equation 
 \begin{equation}\label{eqn:dgp}
@@ -523,7 +523,7 @@ Group sizes                 & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end
 \caption{Empirical power at level $0.05$ for discrete, skewed simulated data} 
 \end{table}
 It makes sense that in all of these simulations, the permutation test using the change scores as the response measure is more powerful than the permutation test using the raw outcomes.
-The baseline and outcome were highly correlated, so the change score had lower variance the outcome alone. \todo{introduce the term change score earlier}
+The baseline and outcome were highly correlated, so the change score had lower variance the outcome alone. 
 In additional simulations, 
 we modified the data-generating process given by Equation~\ref{eqn:dgp} so that the outcome and baseline had a correlation of $0.25$.
 In this case, the result was reversed: 
@@ -532,7 +532,7 @@ the differenced test had low power while the test using the raw outcomes had a p
 This behavior has been studied before by \cite{frison_repeated_1992}, who recommended using the difference in outcome and baseline if their correlation is greater than $0.5$ and to use the outcome only if their correlation is less than $0.5$.
 
 
-\subsection{Clinical data results}
+\section{Clinical data results}\label{sec:results}
 We compared the parametric ANCOVA, the stratified permutation test, and the two linear model-based permutation tests using a dataset from a clinical trial comparing the effectiveness of two treatments for gastroesophageal reflux disease (GERD).
 A detailed discussion of the data and analysis is provided in a supplementary file.
 We summarize the analysis here.
@@ -555,16 +555,23 @@ As our simulations and previous work (\cite{frison_repeated_1992}) show, when th
 Figure~\ref{fig:clinical_distr} shows the distribution of each clinical endpoint for the two treatment groups.
 There is a clear difference in distributions for daily heartburn (``daily\_heart''), daily ``hrdq'' (``daily\_hrdq''), and heartburn frequency (``heart\_freq'').
 The difference is less clear for daily regurgitation (``daily\_regurg'') and regurgitation frequency (``regurg\_freq'').
+The distribution of outcomes for each endpoint is extremely right skewed, calling the assumption of normally distributed error terms into question.
+It is possible that the 
 
 Table~\ref{tab:clinical_pvalues} shows the $p$-values for the four tests and the seven continuous study endpoints.
 Overall, the results confirm our expectations based on visual comparison in Figure~\ref{fig:clinical_distr}:
 one or more of the tests reject the null hypothesis that outcomes are the same between treatments for heartburn frequency, daily heartburn, and daily ``hrdq,''
 but not for any of the other endpoints.
-The three tests based on the linear model all give similar results here.
-The $p$-values from ANCOVA tend to be smaller than the linear model and the residual permutation tests, while the $p$-values stratified, unadjusted permutation test have no consistent pattern.
-The parametric test has comparable or slightly higher power than the other permutation tests.
+The $p$-values for the stratified, unadjusted permutation test have no consistent pattern: sometimes they are smaller than the $p$-values from the other tests and sometimes they are larger.
 
-\todo{need a conclusion}
+The three tests based on the linear model give qualitatively similar results here.
+The ANCOVA $p$-values tend to be smaller than the permutation linear model and residual permutation test $p$-values.
+The permutation tests are somewhat more conservative, accounting for the highly skewed outcome distributions.
+Our conclusions for the heartburn frequency, daily heartburn, and daily ``hrdq'' endpoints differ between ANCOVA and the permutation tests at significance level $0.05$, but not at level $0.1$.
+None of the three tests based on linear models is significant at level $0.1$ for the other four endpoints;
+there is no endpoint which would be deemed significant using a permutation test but insiginificant with ANCOVA.
+This suggests that the parametric test correctly discriminates between endpoints that are significantly different and endpoints that are not different between treatment A and treatment B.
+
 
 \begin{figure}
 \centering
@@ -595,7 +602,7 @@ daily\_dysp   & 0.582                      & 0.810                              
 \caption{Comparison of p-values from four tests, for each continuous endpoint.} 
 \end{table}
 
-\section{Discussion}
+\section{Discussion}\label{sec:discussion}
 
 This paper adds to the literature comparing parametric and nonparametric tests.
 Our results match those of \citet{vickers_parametric_2005} and \citet{anderson_empirical_1999}, where parametric ANCOVA and regression-based $t$ tests performed the same or better than the comparable nonparametric tests.
@@ -605,7 +612,9 @@ In the supplementary simulation files, we also considered data with other possib
 The linear regression-based tests, both the parametric ANCOVA and the permutation tests, suffered a loss of power when the ANCOVA assumptions were violated.
 However, the tests remained comparable to each other.
 It is a matter of taste which test one chooses for their experiment: while the parametric test may be robust to violations of its assumptions, it is somewhat reassuring that the permutation test can exactly match the randomization that was done while making no distributional assumptions.
-\todo{reiterate secondary analysis point}
+Applying a linear model based permutation test as a secondary analysis can give insight into how ANCOVA results depend on the method's assumptions
+(making it conservative, anti-conservative, or not systematically affecting the $p$-value in a particular direction),
+and give evidence that inferences based on ANCOVA are reliable.
 
 Permutation tests do not come entirely free of assumptions, though.  
 \cite{romano_behavior_1990} warns against using permutation tests naively if items are not truly exchangeable. 
@@ -613,6 +622,9 @@ For instance, he points to the case where observations have unequal variances.
 This is a problem in practice as one cannot observe errors; it is a leap of faith to assert that they are homogeneous and therefore exchangeable.
 \cite{boik_fisherpitman_1987} illustrates this phenomenon using the traditional $F$ test and its permutation counterpart, 
 and demonstrates by simulation that the latter has larger than nominal level when the error variances are unequal.
+Randomized experiments mitigate this problem, but is important to conduct permutation tests by exactly mimicking the randomization that was done.
+For instance, in stratified experiments, it is conceivable that the variance of outcomes differs across strata for reasons unrelated to the treatment.
+Treatment assignment is exchangeable within strata, but not across strata, and a permutation test that ignores this fact may be invalid.
 
 It is important to note that the permutation tests described here are exact only in the context of randomized experiments.
 Treatment is assigned at random and is therefore statistically independent of the covariates $X$ and the errors $\varepsilon$.
