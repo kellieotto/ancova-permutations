@@ -36,28 +36,7 @@ The observed $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 Suppose there are three strata with $\beta_1 = 1, \beta_2 = 1.5,$ and $\beta_3 = 2$.
 Assume that there are 16 individuals per stratum and treatment assignment is \textbf{imbalanced}: 12 people receive each treatment 0 and 4 people receive treatment 1.
 
-We use two designs:
-
-* Design 1: $\gamma_1 = \gamma_2 = \gamma_3 = 1$. This is the standard assumption of a constant, additive treatment effect.
-* Design 2: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in stratums 2 and 3. This is a simplistic case of heterogeneous treatment effects.
-
-With these two designs, we vary the distribution of $\varepsilon$.
-In the first case, we use $\varepsilon \sim N(0, 1)$ to mimic the usual ANCOVA assumptions.
-In the second case, $\varepsilon \sim t(2)$ so the errors are heavy-tailed.
-Thus, there are four total simulation designs.
-
-We compare five tests:
-
-* ANCOVA: we fit a linear model of response $Y_1$ on baseline $Y_0$, treatment $Z$, and a dummy for stratum.
-* Stratified permutation: we permute treatment assignment within stratum, then take the difference in means between treated and control outcomes $Y_1$
-* Differenced permutation: we do the same permutation procedure as the stratified permutation test, except we use the difference between outcome and baseline, $Y_1 - Y_0$
-* Linear model (LM) permutation: we use the same stratified permutation procedure as above, except use the $t$-statistic for the coefficient on treatment in the linear regression of $Y_1$ on $Y_0$, $Z$, and stratum dummies
-* Freedman-Lane test: see the other Rmd document for a full description of this procedure
-
-Throughout our simulations, we first fix $Y_0$ and stratum ID.
-Treatment $Z$ and the errors $\varepsilon$ are randomly drawn according to their respective distributions.
-Then, $Y_1$ is constructed using the linear data-generating process above.
-We regenerate $Z$, $\varepsilon$, and $Y_1$ 100 times for each design, then compute the empirical power of the five tests.
+The same simulation guidelines as detailed in the Gaussian simulation file.
 
 # Data-generation, tests, and plotting functions
 
@@ -164,39 +143,24 @@ plot_power_curves <- function(power_mat, title){
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   xlab("P-value") +
   ylab("Power") +
-  ggtitle(title)
+  ggtitle(title) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    strip.text.x = element_text(size = 12)
+  ) 
 }
 
-plot_pvalue_hist <- function(pvalue_mat, title){
-  melt(pvalue_mat) %>%
-  mutate("Method" = Var2) %>%
-  ggplot(aes(x = value, fill = Method)) +
-  geom_histogram() +
-  facet_wrap(~Method) +
-  ggtitle(title)
-}
-
-plot_pvalue_scatter <- function(pvalue_mat, title){
-  pvalue_mat %>%
-  as.data.frame() %>%
-  select(ANCOVA, strat = starts_with("Stratified")) %>%
-  ggplot(aes(x = ANCOVA, y = strat)) + 
-  geom_point() +
-  xlim(0, 1) + ylim(0, 1) +
-  ylab("Stratified Permutation") +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  ggtitle(title)
-}
 ```
 
 ## Test level: simulation under the null
 
-Before testing for different kinds of effects, we begin checking that the tests have the correct level.
-We follow the procedure described above, using an effect size of $\gamma = 0$ at all strata and using standard normal errors.
-To have the correct level means that the test rate of rejection at level $\alpha$ is $\alpha 100\%$.
-In other words, the p-values are uniformly distributed and the power curve should coincide with the line with slope $1$ through the origin.
-Figure \ref{fig:design_null_plots} demonstrates that this is the case.
-If anything, the differenced stratified permutation test has fewer than $\alpha 100\%$ false positives when using level $\alpha$.
+The figures below show that the test has the correct level under the null for both error distributions.
 
 ```{r design_null_gaussian, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
@@ -214,9 +178,8 @@ design0_power <- apply(design0_pvalues, 2, compute_power)
 ```
 
 ```{r design_null_plots, fig.height = 4, fig.align="center"}
-plot_power_curves(design0_power, "No Effect, Normal Errors")
+plot_power_curves(design0_power, "No Effect \n Normal Errors")
  
-plot_pvalue_hist(design0_pvalues, "No Effect, Normal Errors")
 ```
 
 ```{r design_null_heavy, fig.height = 4}
@@ -235,14 +198,13 @@ design00_power <- apply(design00_pvalues, 2, compute_power)
 ```
 
 ```{r design_null_heavy_plots, fig.height = 4, fig.align="center"}
-plot_power_curves(design00_power, "No Effect, Heavy-tailed Errors")
+plot_power_curves(design00_power, "No Effect \n Heavy-tailed Errors")
 
-plot_pvalue_hist(design00_pvalues, "No Effect, Heavy-tailed Errors") 
 ```
 ## Design 1: Constant additive effect, normal errors
 
 There is no discernable difference in power between the ANCOVA, the differenced stratified permutation test, the LM permutations, or the Freedman-Lane test.
-However, the simple stratified permutation test of $Y_1$ has substantially less power than the other four.
+Only the simple stratified permutation test of $Y_1$ has substantially less power than the other four.
 Without controlling for the baseline values, the variance in $Y_1$ masks the treatment effect.
 
 ```{r design1, fig.height = 4}
@@ -262,16 +224,14 @@ design1_power <- apply(design1_pvalues, 2, compute_power)
 ```
 
 ```{r design1_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design1_power, "Constant Additive Effect of 1, Normal Errors") 
+plot_power_curves(design1_power, "Constant Additive Effect of 1 \n Normal Errors") 
 
-plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 1, Normal Errors")
 ```
 
 ## Design 2: Single stratum effect, normal errors
 
-A similar pattern emerges: the simple stratified permutation test has low power, while the other four power curves roughly coincide.
-The Freedman-Lane test may have the highest power for small p-values, but this could also just be noise.
-All five power curves are closer to the line passing through the origin: since the effect is only present at one stratum, it is more difficult to detect.
+The results here are similar to the Gaussian simulations.
+We omit comments for the rest: these is simply a loss in power for all tests relative to the balanced design.
 
 ```{r design2, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
@@ -289,16 +249,12 @@ design2_power <- apply(design2_pvalues, 2, compute_power)
 ```
 
 ```{r design2_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design2_power, "Effect of 1 at a Single stratum, Normal Errors")
+plot_power_curves(design2_power, "Effect of 1 at a Single stratum \n Normal Errors")
  
-plot_pvalue_hist(design2_pvalues, "Effect of 1, Normal Errors")
 ```
 
 ## Design 3: Constant additive effect, heavy-tailed errors
 
-Again, we find that the four power curves coincide while the curve for the stratified permutation test is below the others.
-Here, the difference between the curves is not large.
-Controlling for baseline $Y_0$ does not substantially help reduce variance.
 
 ```{r design3, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
@@ -316,15 +272,11 @@ design3_power <- apply(design3_pvalues, 2, compute_power)
 ```
 
 ```{r design3_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design3_power, "Constant Additive Effect of 1, Heavy-tailed Errors")
+plot_power_curves(design3_power, "Constant Additive Effect of 1 \n Heavy-tailed Errors")
  
-plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 1, Heavy-tailed Errors")
 ```
 
 ## Design 4: single stratum effect, heavy-tailed errors
-
-The noise from the heavy-tailed errors masks the treatment effect so much that controlling for baseline measures makes no difference.
-There is almost no power to detect an effect using any of the five tests.
 
 ```{r design4, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
@@ -342,9 +294,8 @@ design4_power <- apply(design4_pvalues, 2, compute_power)
 ```
 
 ```{r design4_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design4_power, "Effect of 1 at a Single stratum, Heavy-tailed Errors")
+plot_power_curves(design4_power, "Effect of 1 at a Single stratum \n Heavy-tailed Errors")
  
-plot_pvalue_hist(design4_pvalues, "Effect of 1, Heavy-tailed Errors")
 ```
 
 
