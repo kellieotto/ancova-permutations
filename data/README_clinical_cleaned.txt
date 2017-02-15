@@ -1,4 +1,4 @@
-This README_clinical_cleaned.txt file was created on 20161209 by Kellie Ottoboni
+This README file was created on 20170215 by Kellie Ottoboni
 
 -------------------
 GENERAL INFORMATION
@@ -28,10 +28,10 @@ GENERAL INFORMATION
 	Slough, Berkshire SL1 3UH United Kingdom
 	fraser.lewis@rb.com
 	
-3. Date of data collection 
+3. Date of data collection
 	Unknown
 
-4. Geographic location of data collection (where was data collected?): 
+4. Geographic location of data collection (where was data collected?):
 	8 anonymized sites in 2 countries
 
 5. Information about funding sources that supported the collection of the data:
@@ -44,23 +44,23 @@ SHARING/ACCESS INFORMATION
 
 
 1. Licenses/restrictions placed on the data:
-TODO
+	CC-BY-4.0
 
 2. Links to publications that cite or use the data:
-TODO
+	https://github.com/kellieotto/ancova-permutations/blob/master/ms/ms.pdf
 
 3. Links to other publicly accessible locations of the data:
-TODO
+	TBD
 
 4. Links/relationships to ancillary data sets:
-N/A
+	Not applicable.
 
 5. Was data derived from another source?
-    Data was derived from a proprietary dataset belonging to RB.
-	The R code used to derive this dataset from the original one is included in clinical_cleaned.R.
+    Data was derived from a proprietary dataset belonging to Reckitt Benckiser.
+	The R code used to derive this dataset from the raw data is hosted at https://github.com/kellieotto/ancova-permutations/blob/master/data/clinical_cleaned.R.
 
 6. Recommended citation for the data:
-TODO
+	TBD
 
 
 
@@ -126,10 +126,10 @@ DATA-SPECIFIC INFORMATION FOR clinical_cleaned.csv
 	heart_freq: Average heartburn frequency over the week. Range 0 to 10.
 	regurg_freq: Average regurgitation frequency over the week. Range 0 to 10.
 	dysp_freq: Average dyspepsia frequency over the week. Range 0 to 10.
-	daily_heart:
-	daily_regurg:
+	daily_heart: Heartburn score.
+	daily_regurg: Regurgitation score.
 	daily_hrdq: HRDQ score = severity * frequency/(frequency+3).
-	daily_dysp:
+	daily_dysp: Dyspepsia score.
 
 
 4. Missing data codes:
