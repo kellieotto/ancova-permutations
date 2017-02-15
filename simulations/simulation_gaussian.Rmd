@@ -174,29 +174,17 @@ plot_power_curves <- function(power_mat, title){
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   xlab("P-value") +
   ylab("Power") +
-  ggtitle(title)
-  
-}
-
-plot_pvalue_hist <- function(pvalue_mat, title){
-  melt(pvalue_mat) %>%
-  mutate("Method" = Var2) %>%
-  ggplot(aes(x = value, fill = Method)) +
-  geom_histogram() +
-  facet_wrap(~Method) +
-  ggtitle(title)
-}
-
-plot_pvalue_scatter <- function(pvalue_mat, title){
-  pvalue_mat %>%
-  as.data.frame() %>%
-  select(ANCOVA, strat = starts_with("Stratified")) %>%
-  ggplot(aes(x = ANCOVA, y = strat)) + 
-  geom_point() +
-  xlim(0, 1) + ylim(0, 1) +
-  ylab("Stratified Permutation") +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  ggtitle(title)
+  ggtitle(title) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    strip.text.x = element_text(size = 12)
+  ) 
 }
 ```
 
@@ -204,10 +192,10 @@ plot_pvalue_scatter <- function(pvalue_mat, title){
 
 Before testing for different kinds of effects, we begin checking that the tests have the correct level.
 We follow the procedure described above, using an effect size of $\gamma = 0$ at all strata and using standard normal errors.
-To have the correct level means that the test rate of rejection at level $\alpha$ is $\alpha 100\%$.
+To have the correct level means that the test rate of rejection at level $\alpha$ is $100\alpha\%$.
 In other words, the p-values are uniformly distributed and the power curve should coincide with the line with slope $1$ through the origin.
-Figure \ref{fig:design_null_plots} demonstrates that this is the case.
-If anything, the differenced stratified permutation test has fewer than $\alpha 100\%$ false positives when using level $\alpha$.
+The figure below demonstrates that this is the case.
+If anything, the differenced stratified permutation test has fewer than $100\alpha\%$ false positives when using level $\alpha$.
 
 ```{r design_null_gaussian, fig.height = 4}
 set.seed(760682460) # Generated from random.org Timestamp: 2016-11-14 10:21:12 UTC
@@ -226,7 +214,6 @@ design0_power <- apply(design0_pvalues, 2, compute_power)
 
 ```{r design_null_plots, fig.height = 4, fig.align="center"}
 plot_power_curves(design0_power, "No Effect, Normal Errors")
-plot_pvalue_hist(design0_pvalues, "No Effect, Normal Errors")
 ```
 
 ```{r design_null_heavy, fig.height = 4}
@@ -246,7 +233,6 @@ design00_power <- apply(design00_pvalues, 2, compute_power)
 
 ```{r design_null_heavy_plots, fig.height = 4, fig.align="center"}
 plot_power_curves(design00_power, "No Effect, Heavy-tailed Errors")
-plot_pvalue_hist(design00_pvalues, "No Effect, Heavy-tailed Errors") 
 ```
 
 ## Design 1: Constant additive effect, normal errors
@@ -272,8 +258,7 @@ design1_power <- apply(design1_pvalues, 2, compute_power)
 ```
 
 ```{r design1_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design1_power, "Constant Additive Effect of 1, Normal Errors")
-plot_pvalue_hist(design1_pvalues, "Constant Additive Effect of 1, Normal Errors")
+plot_power_curves(design1_power, "Constant Additive Effect of 1 \n Normal Errors")
 ```
 
 ## Design 2: Single stratum effect, normal errors
@@ -298,8 +283,7 @@ design2_power <- apply(design2_pvalues, 2, compute_power)
 ```
 
 ```{r design2_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design2_power, "Effect of 1 at a Single stratum, Normal Errors")
-plot_pvalue_hist(design2_pvalues, "Effect of 1, Normal Errors")
+plot_power_curves(design2_power, "Effect of 1 at a Single stratum \n Normal Errors")
 ```
 
 ## Design 3: Constant additive effect, heavy-tailed errors
@@ -324,8 +308,7 @@ design3_power <- apply(design3_pvalues, 2, compute_power)
 ```
 
 ```{r design3_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design3_power, "Constant Additive Effect of 1, Heavy-tailed Errors")
-plot_pvalue_hist(design3_pvalues, "Constant Additive Effect of 1, Heavy-tailed Errors")
+plot_power_curves(design3_power, "Constant Additive Effect of 1 \n Heavy-tailed Errors")
 ```
 
 ## Design 4: single stratum effect, heavy-tailed errors
@@ -349,8 +332,7 @@ design4_power <- apply(design4_pvalues, 2, compute_power)
 ```
 
 ```{r design4_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design4_power, "Effect of 1 at a Single stratum, Heavy-tailed Errors") 
-plot_pvalue_hist(design4_pvalues, "Effect of 1, Heavy-tailed Errors")
+plot_power_curves(design4_power, "Effect of 1 at a Single stratum \n Heavy-tailed Errors") 
 ```
 
 
@@ -384,8 +366,7 @@ design5_power <- apply(design5_pvalues, 2, compute_power)
 ```
 
 ```{r design5_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design5_power, "Constant Additive Effect of 1, Normal Errors \n Unpredictive baseline")
-plot_pvalue_hist(design5_pvalues, "Constant Additive Effect of 1, Normal Errors \n Unpredictive baseline")
+plot_power_curves(design5_power, "Constant Additive Effect of 1 \n Normal Errors \n Unpredictive baseline")
 ```
 
 
@@ -418,8 +399,7 @@ design6_power <- apply(design6_pvalues, 2, compute_power)
 ```
 
 ```{r design6_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design6_power, "Constant Additive Effect of 1, Normal Errors")
-plot_pvalue_hist(design6_pvalues, "Constant Additive Effect of 1, Normal Errors")
+plot_power_curves(design6_power, "Constant Additive Effect of 1 \n Normal Errors")
 ```
 
 ## Design 7: Single stratum effect, normal errors
@@ -443,8 +423,7 @@ design7_power <- apply(design7_pvalues, 2, compute_power)
 ```
 
 ```{r design7_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design7_power, "Effect of 1 at a Single stratum, Normal Errors")
-plot_pvalue_hist(design7_pvalues, "Effect of 1, Normal Errors")
+plot_power_curves(design7_power, "Effect of 1 at a Single stratum \n Normal Errors")
 ```
 
 # Heteroskedastic errors
@@ -478,8 +457,7 @@ design8_power <- apply(design8_pvalues, 2, compute_power)
 ```
 
 ```{r design8_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design8_power, "Constant Additive Effect of 1, Heteroskedastic Errors")
-plot_pvalue_hist(design8_pvalues, "Constant Additive Effect of 1, Heteroskedastic Errors")
+plot_power_curves(design8_power, "Constant Additive Effect of 1 \n Heteroskedastic Errors")
 ```
 
 ## Design 9: heteroskedastic errors, single stratum effect
@@ -504,8 +482,7 @@ design9_power <- apply(design9_pvalues, 2, compute_power)
 ```
 
 ```{r design9_plot, fig.height = 4, fig.align="center"}
-plot_power_curves(design9_power, "Effect of 1 at a Single stratum, Heteroskedastic Errors")
-plot_pvalue_hist(design9_pvalues, "Effect of 1, Heteroskedastic Errors")
+plot_power_curves(design9_power, "Effect of 1 at a Single stratum \n Heteroskedastic Errors")
 ```
 
 

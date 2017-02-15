@@ -1,4 +1,4 @@
-﻿This README_clinical_cleaned.txt file was created on 20161209 by Kellie Ottoboni
+This README_clinical_cleaned.txt file was created on 20161209 by Kellie Ottoboni
 
 -------------------
 GENERAL INFORMATION
@@ -6,7 +6,7 @@ GENERAL INFORMATION
 
 
 1. Title of Dataset 
-Clinical trial results
+	GERD clinical trial results
 
 2. Author Information
 
@@ -23,17 +23,19 @@ Clinical trial results
 	luigi.salmaso@unipd.it
 	
     Fraser Lewis
-	‎R&D Data Analytics, RB
+	Medical Affairs and Evidence Generation, Reckitt Benckiser
 	103-105 Bath Road
 	Slough, Berkshire SL1 3UH United Kingdom
 	fraser.lewis@rb.com
 	
-3. Date of data collection (unknown)
+3. Date of data collection 
+	Unknown
 
-4. Geographic location of data collection (where was data collected?): 8 sites in 2 countries
+4. Geographic location of data collection (where was data collected?): 
+	8 anonymized sites in 2 countries
 
 5. Information about funding sources that supported the collection of the data:
-RB collected this data for a clinical trial.
+	Reckitt Benckiser collected this data for a clinical trial.
 
 
 --------------------------
@@ -79,7 +81,7 @@ METHODOLOGICAL INFORMATION
 
 
 1. Description of methods used for collection/generation of data: 
-Individuals were surveyed for 14 days. The survey is available at https://github.com/kellieotto/anova-permutations/blob/master/data/questionnaire.pdf.
+	Individuals were surveyed for 14 days. The survey is available at https://github.com/kellieotto/ancova-permutations/blob/master/data/questionnaire.pdf.
 
 
 2. Methods for processing the data: 
@@ -94,7 +96,7 @@ Individuals were surveyed for 14 days. The survey is available at https://github
 	Not applicable.
 	
 5. Environmental/experimental conditions:
-Two treatments, called A and B here.
+	Two treatments, called A and B here.
 
 6. Describe any quality-assurance procedures performed on the data:
 	Not applicable.
