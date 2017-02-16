@@ -36,7 +36,7 @@ The observed $(Y_{ij0}, \varepsilon_{ij})$ are independent across $i$ and $j$.
 Suppose there are three strata with $\beta_1 = 1, \beta_2 = 1.5,$ and $\beta_3 = 2$.
 Assume that there are 16 individuals per stratum and treatment assignment is \textbf{imbalanced}: 12 people receive each treatment 0 and 4 people receive treatment 1.
 
-The same simulation guidelines as detailed in the Gaussian simulation file.
+We use the same simulation guidelines as detailed in the Gaussian simulation file.
 
 # Data-generation, tests, and plotting functions
 
