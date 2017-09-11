@@ -204,7 +204,6 @@ However, we needn't take this perspective for $\gamma$ to be a useful quantity; 
 
 
 To carry out the standard parametric hypothesis test for a linear model, the following assumptions are needed (\cite{freedman_statistical_2005}):
-\todo{CHECK}
 \begin{enumerate}
 \item \textbf{Linearity:} The data $Y$ are related to $X$ and $Z$ linearly.
 \item \textbf{Constant slopes:} Stratum membership only affects the intercept $\alpha_j$, not the slopes $\beta$ and $\gamma$.
@@ -213,24 +212,21 @@ To carry out the standard parametric hypothesis test for a linear model, the fol
 \item \textbf{Normality:} The errors are normally distributed.
 \end{enumerate}
 
-\todo{are the estimator, standard error, variance clear here?}
 The coefficients are estimated using least squares (or equivalently, by maximizing the likelihood).
 The estimated coefficient $\hat{\gamma}$ is the estimated average treatment effect. 
-(Note, only Assumptions (1) and (2) are needed to guarantee the existence of a solution.
-The solution will be unique as long as there is no linear relationship between $X$, $Z$, and stratum membership.)
 This procedure also yields an estimate $\hat{\sigma}_{\hat{\gamma}}^2$ of the variance of $\hat{\gamma}$.
 Under the null hypothesis, the test statistic 
 $$ T = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}}$$
 follows the Student $t$ distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
 The $p$-value for this hypothesis test is the probability, assuming the null hypothesis of zero coefficient is true, that a value drawn from the $t$ distribution is larger in magnitude than $T$.
-This test is equivalent to the $F$-test and the likelihood ratio test assuming the Gaussian model,
-and \todo{ cite this? is therefore locally most powerful ????}.
+This test is equivalent to the $F$-test.
+When the model assumptions are true, it is uniformly most powerful.
 
 However, in the context of a randomized experiment, these assumptions will not be satisfied.
-The estimated treatment effect $\hat{\gamma}$ and nominal standard errors $\hat{\sigma}_{\hat{\gamma}}$ can be severely biased (\todo{cite freedman 2008, lin 2013}).
-\todo{Lin 2013} shows that running a regression with a full set of treatment and covariate interaction terms cannot hurt asymptotic precision, and using the Huber-White sandwich standard errors can yield asymptotically valid confidence intervals.
+The estimated treatment effect $\hat{\gamma}$ and nominal standard errors $\hat{\sigma}_{\hat{\gamma}}$ can be severely biased (\cite{freedman_regression_2008, lin_agnostic_2013}).
+\cite{lin_agnostic_2013} shows that running a regression with a full set of treatment and covariate interaction terms cannot hurt asymptotic precision, and using the Huber-White sandwich standard errors can yield asymptotically valid confidence intervals.
 In small samples, the bias may still be substantial.
-\todo{cite Sekhon post-stratification} show that post-stratification, estimating treatment effects within groups of similar individuals defined after data are collected, can ameliorate this bias.
+\cite{miratrix_adjusting_2013} show that post-stratification, estimating treatment effects within groups of similar individuals defined after data are collected, can ameliorate this bias.
 This is equivalent to estimating a fully saturated linear model with interaction terms for treatment and stratum membership.
 The linear ANCOVA model does not account for variation in the treatment effect across strata in this way;
 if the difference in potential outcomes is heterogeneous across strata, then the coefficient $\gamma$ may be attenuated towards 0.
@@ -240,7 +236,6 @@ if the difference in potential outcomes is heterogeneous across strata, then the
 In randomization inference, the only random quantities are those involving $Z$, the vector of treatment assignments.
 The exact inference is derived from the randomization distribution of statistics involving $Z$.
 In particular, the potential outcomes and covariates $(Y_{ij}(1), Y_{ij}(0), X_{ij})$ are fixed in the finite population under study, while the observed response $Y_{ij}$ changes with $Z_{ij}$.
-\todo{cite rosenberg 2002}
 
 
 Suppose we wish to test the null hypothesis that individual by individual, treatment has no effect.
@@ -250,8 +245,8 @@ $$H_0: Y_{ij}(1) = Y_{ij}(0), \forall i = 1, \dots, n_j, j = 1,\dots, J.$$
 
 
 Under the null hypothesis, which treatment an individual received amounts to an arbitrary label.
-Once we observe one response under a particular treatment, we can impute the other potential outcome; namely, it would have been the same.
-Thus, the observed $Y_{ij}$ form a sufficient statistic for the data. \todo{cite P\&S}
+Once we observe one response under a particular treatment, we can impute the other potential outcome; namely, it would have been the same  (\cite{rosenbaum_covariance_2002}).
+Thus, the observed $Y_{ij}$ form a sufficient statistic for the data (\cite{pesarin_permutation_2010}).
 This null hypothesis is stronger than the null hypothesis for the parametric ANCOVA, which only asserts that differences in potential outcomes are zero \textit{on average}.
 
 In a randomized experiment with complete randomization, any randomization that assigns $n_j$ individuals to treatment 1 in stratum $j$ for each stratum has equal probability.
@@ -384,17 +379,27 @@ Then we generated potential outcomes as
 
 $$Y_{ij}(Z_{ij}) = \frac{(2Z_{ij} - 1)\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \delta_{ij}.$$
 
-The treatment effect for individual $(i, j)$ is $\gamma e^{v_{ij}}$ and we would like to estimate the average treatment effect in the sample.
+We included $n_j=16$ individuals per stratum and treatment assignment was balanced, i.e. 8 people received each treatment in each stratum.
+After sampling $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$, we regenerated $Z$ and the potential outcomes $Y(Z)$ 10,000 times.
+We repeated this procedure for each distribution of latent variables $v$ and of the errors $\varepsilon$ and $\delta$.
 
-Assume that there are $n_j=16$ individuals per stratum and treatment assignment is balanced, i.e. 8 people receive each treatment at each stratum.
-After sampling $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$, we regenerate $Z$ and the potential outcomes $Y(Z)$ 10,000 times.
-We repeat this procedure for each distribution of latent variables $v$ and of the errors $\varepsilon$ and $\delta$.
+The treatment effect for individual $(i, j)$ was $\gamma e^{v_{ij}}$.
+We tested whether the treatment had a nonzero effect in the sample using each of the tests described.
+
+
+
 
 \todo{insert figures and table}
 
 
 \todo{what's the correlation between $X$ and $Y$?}
 \subsection{Discrete outcomes}
+
+Many outcomes are measured on a discrete, ordinal scale but the same regression-based methods are used to test for a nonzero treatment effect.
+We repeated the procedure above, instead discretizing the covariate $X$ and potential outcomes $Y(Z)$ by taking their floor.
+We used the same distributions for the latent variables $v$.
+We drew $\varepsilon$ and $\delta$ from independent standard normal distributions.
+
 
 \subsection{Imbalanced treatment groups}
 %Outcomes were generated according to the linear equation 
