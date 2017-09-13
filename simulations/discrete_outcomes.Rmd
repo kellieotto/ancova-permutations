@@ -1,0 +1,279 @@
+---
+title: "ANCOVA Comparison Simulations: Discrete Outcomes"
+author: "Kellie Ottoboni"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      message = FALSE,
+                      warning = FALSE,
+                      tidy = TRUE, tidy.opts = list(width.cutoff = 60),
+                      cache = TRUE)
+#devtools::install_github("statlab/permuter")
+require(permuter)
+require(dplyr)
+require(reshape2)
+require(ggplot2)
+require(xtable)
+options(xtable.comment = FALSE, xtable.include.rownames = FALSE, xtable.align = "p{3.5cm}")
+require(grid)
+require(gridExtra)
+
+report_theme <- theme_bw() + theme(
+  axis.text.x = element_text(size = 14, angle = -45),
+  axis.text.y = element_text(size = 14),
+  axis.title = element_text(size = 14),
+  title = element_text(size = 14),
+  legend.title = element_text(size = 14),
+  legend.text = element_text(size = 14),
+  strip.text.x = element_text(size = 14)
+)
+```
+
+# Discrete data
+
+Step 1:
+We generated the covariate sand potential outcomes according to the methods in the continuous outcome section but discretized them by taking the floor.
+Assume that there are $n_j=16$ individuals per stratum and treatment assignment is balanced, i.e. 8 people receive each treatment at each stratum.
+After sampling $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$, we regenerate $Z$ 10,000 times.
+We repeat this procedure for each distribution of latent variables $v$ and of the errors $\varepsilon$ and $\delta$.
+
+Step 2:
+We regenerate $Z$ and recompute $Y_(Z)$ 10,000 times for each design.
+
+In expectation, the average treatment effect is $\gamma$.
+We compare the empirical power of five tests to detect this treatment effect:
+
+* ANCOVA: we fit a linear model of response $Y_1$ on baseline $Y_0$, treatment $Z$, and a dummy for stratum.
+* Stratified permutation: we permute treatment assignment within stratum, then take the difference in means between treated and control outcomes $Y_1$
+* Differenced permutation: we do the same permutation procedure as the stratified permutation test, except we use the difference between outcome and baseline, $Y_1 - Y_0$
+* Linear model (LM) permutation: we use the same stratified permutation procedure as above, except use the $t$-statistic for the coefficient on treatment in the linear regression of $Y_1$ on $Y_0$, $Z$, and stratum dummies
+* Freedman-Lane test: see the other Rmd document for a full description of this procedure
+
+
+# Data-generation, tests, and plotting functions
+
+```{r generate_sample}
+gen_y <- function(gamma, v, error, Z){
+  y <- floor(0.5*((2*Z-1)*gamma*exp(v) + exp(v/2)) + error)
+  return(y)
+}
+
+gen_x <- function(gamma, v, error){
+  x <- floor(0.5*(-1*gamma*exp(v) + exp(v/2)) + error)
+  return(x)
+}
+
+generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
+  # Input:
+  # gamma = multiplier for the magnitude of the treatment effect
+  # effect = "same effect" or "heterogeneous"
+  # errors = "normal" or "heavy"
+  # n = number of individuals at each stratum
+  # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), stratumID (stratum), stratum_effect (beta coefficient per individual), and epsilon (errors)
+  
+  stratumID <- rep(1:3, times = n)
+  N <- sum(n)
+  
+  # What is the treatment effect?
+  if(effect == "same effect"){
+    v <- runif(N, min=-4, max=4)
+  } else if(effect == "heterogeneous"){
+    v <- rep(0, N)
+    v[stratumID == 1] <- runif(n[1], min=-4, max=-1)
+    v[stratumID == 2] <- runif(n[2], min=-1, max=1)
+    v[stratumID == 3] <- runif(n[3], min=1, max=4)
+  } else {
+    stop("invalid parameter effect")
+  }
+  
+  # Generate errors
+  if(errors == "normal"){
+    epsilon <- rnorm(N)
+    delta <- rnorm(N)
+  } else if (errors == "t"){
+    epsilon <- rt(N, df = 2)
+    delta <- rt(N, df = 2)
+  } else if (errors == "lognormal"){
+    epsilon <- rlnorm(N)
+    delta <- rlnorm(N)
+  } else if (errors == "exponential"){
+    epsilon <- rexp(N) - 1
+    delta <- rexp(N) - 1
+  } else {
+    stop("invalid errors parameter")
+  }
+  
+  # Generate covariates
+  Z <- rep(0:1, length.out = N)
+  Y0 <- gen_x(gamma, v, epsilon)
+  Y1 <- gen_y(gamma, v, delta, Z)
+  return(data.frame(Y1, Y0, Z, v, stratumID, epsilon, delta))
+}
+
+generate_simulated_pvalues <- function(dataset, reps = 1e3){
+  # Inputs:
+  # dataset = a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), and stratumID (stratum)
+  # Returns: a vector of p-values
+  # first element is the p-value from the ANCOVA
+  # second element is the p-value from the stratified two-sample permutation test
+  # third element is the p-value from the linear model test, permuting treatment
+  # fourth element is the p-value from the Freedman-Lane linear model test, permuting residuals
+  
+  # ANCOVA
+  modelfit <- lm(Y1 ~ Y0 + Z + factor(stratumID), data = dataset)
+  resanova <- summary(aov(modelfit))
+  anova_pvalue <- resanova[[1]]["Z", "Pr(>F)"]
+  
+  # Stratified permutation test of Y1
+  observed_diff_means <- mean(dataset$Y1[dataset$Z == 1]) - mean(dataset$Y1[dataset$Z == 0])
+  diff_means_distr <- stratified_two_sample(group = dataset$Z, response = dataset$Y1, stratum = dataset$stratumID, reps = reps)
+  perm_pvalue <- t2p(observed_diff_means, diff_means_distr, alternative = "two-sided")
+  
+  # Diffed permutation test of Y1-Y0
+  dataset$diff <- dataset$Y1 - dataset$Y0
+  observed_diff_means2 <- mean(dataset$diff[dataset$Z == 1]) - mean(dataset$diff[dataset$Z == 0])
+  diff_means_distr2 <- stratified_two_sample(group = dataset$Z, response = dataset$diff, stratum = dataset$stratumID, reps = reps)
+  perm_pvalue2 <- t2p(observed_diff_means2, diff_means_distr2, alternative = "two-sided")
+  
+  # Permutation of treatment in linear model
+  observed_t1 <- summary(modelfit)[["coefficients"]]["Z", "t value"]
+  
+  # Freedman-Lane linear model residual permutation
+  lm2_no_tr <- lm(Y1~Y0 + factor(stratumID), data = dataset)
+  dataset$lm2_resid <- residuals(lm2_no_tr)
+  lm2_yhat <- fitted(lm2_no_tr)
+  
+  lm1and2_t_distr <-  replicate(reps, {
+    dataset[, c("Z_perm", "lm2_resid_perm")] <- permute_within_groups(dataset[, c("Z", "lm2_resid")], dataset$stratumID)
+    lm1_perm <- lm(Y1 ~ Y0 + Z_perm + factor(stratumID), data = dataset)
+    
+    dataset$response_fl <-  lm2_yhat + dataset$lm2_resid_perm
+    lm2_perm <- lm(response_fl ~ Y0 + Z + factor(stratumID), data = dataset)
+    
+    c(summary(lm1_perm)[["coefficients"]]["Z_perm", "t value"],
+      summary(lm2_perm)[["coefficients"]]["Z", "t value"])
+  })
+  lm_pvalue <- t2p(observed_t1, lm1and2_t_distr[1, ], alternative = "two-sided")
+  fl_pvalue <- t2p(observed_t1, lm1and2_t_distr[2, ], alternative = "two-sided")
+  
+  return(c("ANCOVA" = anova_pvalue, 
+           "Stratified Permutation" = perm_pvalue, 
+           "Differenced Permutation" = perm_pvalue2,
+           "LM Permutation" = lm_pvalue, 
+           "Freedman-Lane" = fl_pvalue))
+}
+```
+
+```{r function_power_curves}
+compute_power <- function(pvalues){
+  sapply((0:99)/100, function(p) mean(pvalues <= p, na.rm = TRUE))
+}
+
+plot_power_curves <- function(power_mat, title){
+  melt(power_mat) %>% 
+  mutate("pvalue" = Var1/100) %>%
+  mutate("Method" = Var2) %>%
+  ggplot(aes_string(x = "pvalue", y = "value", color = "Method")) +
+  geom_line() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  xlab("P-value") +
+  ylab("Power") +
+  ggtitle(title) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    strip.text.x = element_text(size = 12)
+  ) 
+}
+
+plot_power_gamma <- function(powermat_list, gamma_vec, alpha, title){
+  gamma_power_alpha <- t(sapply(powermat_list, function(x) x[floor(alpha*nrow(x)),]))
+  colnames(gamma_power_alpha) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+  melt(gamma_power_alpha, value.name="Power") %>%
+  mutate("Method" = Var2) %>%
+  mutate("Effect" = rep(gamma_vec, 5)) %>% 
+  ggplot(aes(x = Effect, y = Power)) +
+  geom_line(aes(color = Method))+
+  xlab("Effect size") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    strip.text.x = element_text(size = 12)
+  ) 
+}
+
+```
+
+# Constant additive treatment effect
+
+```{r vary_effect_size_plot, fig.height=4}
+load("discrete_outcomes/vary_gamma_results.Rda")
+gamma_vec <- seq(0, 0.2, by=0.05)
+gamma_power <- lapply(gamma_res, function(x) apply(x, 2, compute_power))
+plot_power_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") 
+```
+
+First, we let the $v_{ij}$ have the same distribution across strata and generated normally distributed errors.
+We varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
+In the random populations that were generated, this corresponded to population average treatment effects of `r round(tr_effect, 2)[1:4]`, and `r round(tr_effect, 2)[5]`, respectively.
+Figure 1 shows the empirical power (rate of rejection in the 10,000 simulations) at level 5\% for these increasing effect sizes.
+When the effect size was zero, all five tests had the correct level of 5\%, though the stratified and differenced permutation tests rejected 3.5\% of the time.
+The differenced permutation test had substantially lower power than the rest,
+again because the correlation between baseline $X$ and outcome $Y$ was low.
+In this case, the unadjusted stratified test had comparable power to the linear model based tests.
+
+
+# Heterogeneous treatment effect
+
+```{r vary_effect_size_het_plot, fig.height=4}
+load("discrete_outcomes/vary_gamma_het_results.Rda")
+gamma_vec <- seq(0, 0.2, by=0.05)
+gamma_power_het <- lapply(gamma_res_het, function(x) apply(x, 2, compute_power))
+plot_power_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") 
+```
+Next, we varied the distribution of $v_{ij}$ across strata and generated normally distributed errors.
+Once again, we varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
+The corresponding population average treatment effects were of `r round(tr_effect_het, 2)[1:4]`, and `r round(tr_effect_het, 2)[5]`, respectively.
+Figure 2 shows the empirical power at level 5\% for these increasing effect sizes.
+The pattern here is nearly identical to Figure 2 in the continuous outcome simulations, so we leave out further comments.
+
+
+```{r plot_for_ms, include=FALSE}
+p1 <- plot_power_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") + 
+  ylim(0, 0.95 ) +
+  theme(legend.position="bottom") + 
+  guides(color=guide_legend(nrow=2,byrow=TRUE)) +
+  report_theme +
+  ggtitle("Constant Treatment \n Effect")
+ 
+p2 <- plot_power_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") +
+    ylim(0, 0.95) +
+    report_theme +
+    ggtitle("Heterogeneous Treatment \n Effect")
+
+tmp <- ggplot_gtable(ggplot_build(p1))
+leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+mylegend <- tmp$grobs[[leg]]
+
+p3 <- grid.arrange(arrangeGrob(p1 + theme(legend.position="none"),
+                         p2 + theme(legend.position="none"),
+                         nrow=1),
+             mylegend, nrow=2,heights=c(10, 2))
+ 
+p3
+ggsave("../ms/fig/discrete_outcomes_simulation_power.pdf", p3, device="pdf", width=8)
+
+```
