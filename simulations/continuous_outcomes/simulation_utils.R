@@ -113,14 +113,14 @@ t2p <- function(tst, distr, alternative = c("greater", "less", "two-sided")) {
 
 
 
-gen_y1 <- function(gamma, v, error, Z){
-  y1 <- 0.5*((2*Z-1)*gamma*exp(v) + exp(v/2)) + error
-  return(y1)
+gen_y <- function(gamma, v, error, Z){
+  y <- 0.5*((2*Z-1)*gamma*exp(v) + exp(v/2)) + error
+  return(y)
 }
 
-gen_y0 <- function(gamma, v, error){
-  y0 <- 0.5*(-1*gamma*exp(v) + exp(v/2)) + error
-  return(y0)
+gen_x <- function(gamma, v, error){
+  x <- 0.5*(-1*gamma*exp(v) + exp(v/2)) + error
+  return(x)
 }
 
 generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
@@ -165,8 +165,8 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   
   # Generate covariates
   Z <- rep(0:1, length.out = N)
-  Y0 <- gen_y0(gamma, v, epsilon)
-  Y1 <- gen_y1(gamma, v, delta, Z)
+  Y0 <- gen_x(gamma, v, epsilon)
+  Y1 <- gen_y(gamma, v, delta, Z)
   return(data.frame(Y1, Y0, Z, v, stratumID, epsilon, delta))
 }
 

@@ -24,8 +24,8 @@ require(gridExtra)
 report_theme <- theme_bw() + theme(
   axis.text.x = element_text(size = 14, angle = -45),
   axis.text.y = element_text(size = 14),
-  axis.title = element_text(size = 20),
-  title = element_text(size = 20),
+  axis.title = element_text(size = 14),
+  title = element_text(size = 14),
   legend.title = element_text(size = 14),
   legend.text = element_text(size = 14),
   strip.text.x = element_text(size = 14)
@@ -252,25 +252,72 @@ plot_power_gamma <- function(powermat_list, gamma_vec, alpha, title){
 
 ```
 
+# Gaussian error terms, constant additive treatment effect
+
 
 ```{r vary_effect_size_plot, fig.height=4}
 load("continuous_outcomes/vary_gamma_results.Rda")
 gamma_vec <- seq(0, 0.2, by=0.05)
 gamma_power <- lapply(gamma_res, function(x) apply(x, 2, compute_power))
-plot_power_gamma(gamma_power, gamma_vec, 0.05, "Power at level 5%, Constant Treatment Effect") 
+plot_power_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") 
 ```
 
+First, we let the $v_{ij}$ have the same distribution across strata and generated normally distributed errors.
+We varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
+In the random populations that were generated, this corresponded to population average treatment effects of `r round(tr_effect, 2)[1:4]`, and `r round(tr_effect, 2)[5]`, respectively.
+Figure 1 shows the empirical power (rate of rejection in the 10,000 simulations) at level 5\% for these increasing effect sizes.
+When the effect size was zero, all five tests had the correct level of 5\%.
+Power for all tests increased with the effect size, though the differenced permutation test lagged behind the rest.
+This is unsurprising, as the correlation between baseline $X$ and outcome $Y$ was low:
+it was highest at $0.33$ when $\gamma=0$ and decreased to approximately $0$ when $\gamma=0.2$.
+The parametric and permutation linear model tests perform comparably and are plotted on top of each other, while the stratified permutation test has slightly more power.
+
+# Gaussian error terms, heterogeneous treatment effect
 ```{r vary_effect_size_het_plot, fig.height=4}
 load("continuous_outcomes/vary_gamma_het_results.Rda")
 gamma_vec <- seq(0, 0.2, by=0.05)
 gamma_power_het <- lapply(gamma_res_het, function(x) apply(x, 2, compute_power))
-plot_power_gamma(gamma_power_het, gamma_vec, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") 
+plot_power_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") 
 ```
+Next, we varied the distribution of $v_{ij}$ across strata and generated normally distributed errors.
+Once again, we varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
+The corresponding population average treatment effects were of `r round(tr_effect_het, 2)[1:4]`, and `r round(tr_effect_het, 2)[5]`, respectively.
+Figure 2 shows the empirical power at level 5\% for these increasing effect sizes.
+Four of the five tests had the correct level of 5\%, while the stratified permutation test rejected only 1\% of the time.
+Both the stratified and differenced permutation tests had lower power than the linear model tests as the effect size increased.
+The correlation between baseline $X$ and outcome $Y$ was low but nontrivial (between 0.04 and 0.44), so this result makes some sense:
+it is beneficial for power to control for the baseline in the linear model, but the correlation is too low to make the differencing method useful.
+
+# Comparison of error distributions
+
+We varied the distributions of the errors $\varepsilon$ and $\delta$ and examined the power of the five tests.
+Recall that these are not errors in the linear model framework, but more like disturbances on the potential outcomes and baseline measures for each individual.
+These disturbances affect the distributions of $X$ and $Y$, which may impact the power of the parametric ANCOVA, and affect the variances of $X$ and $Y$, which may make one method of controlling for the baseline more effective than another.
+We fixed $\gamma=0.2$ and let the errors have a standard normal distribution, a $t$ distribution with 2 degrees of freedom, a standard log normal distribution, or an exponential distribution with parameter $1$, shifted to have mean zero.
+
+Table 1 shows the empirical power (rejection rate among 10,000 simulations) for each of these error distributions and tests, where the $v_{ij}$ came from a single distribution across strata.
+In all cases, the correlation between baseline and outcome was lower than 0.05 in magnitude.
+Thus, the stratified permutation test, which omits the baseline measurement, had the highest power for all error distributions.
+All three linear model based tests had roughly the same rejection rate.
+The differenced permutation test had substantially less power than the other methods, due to the low correlation between baseline and outcome.
+Power was highest for normally distributed errors and was lowest for $t$ distributed errors.
+
+Table 2 shows the same results, but where the distribution of $v_{ij}$ varied across strata.
+In this case, the three linear model based tests had the highest power for each error distribution.
+While the correlation between baseline and outcome was still nearly zero, controlling for it in the linear model tended to increase precision.
+The stratified permutation test lost power for this reason.
+The differenced permutation test continued to have low power.
+Interestingly, when the errors were $t$ or log normally distributed, the power of each test did not change much whether the treatment effects were constant or heterogeneous across strata.
+However, power was lower for normally distributed errors when treatment effects varied across strata.
+In this scenario, the linear model does not fully describe the relationship between baseline and outcome: 
+interaction terms between baseline and stratum ID are needed in the model to capture this variation across strata.
+
+
 ```{r gaussian_homogeneous}
-gaussian_homogeneous <- gamma_power[[which(abs(gamma_vec - 0.2) < 1e-6)]]
+gaussian_homogeneous <- gamma_power[[which(abs(gamma_vec - 0.2) < 1e-6)]] 
 ```
 ```{r gaussian_heterogeneous}
-load("continuous_outcomes/gaussian_heterogeneous.Rda")
+load("continuous_outcomes/gaussian_heterogeneous.Rda") 
 ```
 ```{r t_homogeneous}
 load("continuous_outcomes/t_homogeneous.Rda")
@@ -322,4 +369,32 @@ summarytab_het <- xtable(summary05[5:8, ], digits = 3,
        caption = "Empirical power at level $0.05$ for simulated data with heterogeneous treatment effects",
        label = "tab:power_grid2") 
 print(summarytab_het, include.rownames=FALSE) 
+```
+
+
+```{r plot_for_ms, include=FALSE}
+p1 <- plot_power_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") + 
+  ylim(0, 0.9) +
+  theme(legend.position="bottom") + 
+  guides(color=guide_legend(nrow=2,byrow=TRUE)) +
+  report_theme +
+  ggtitle("Constant Treatment \n Effect")
+ 
+p2 <- plot_power_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") +
+    ylim(0, 0.9) +
+    report_theme +
+    ggtitle("Heterogeneous Treatment \n Effect")
+
+tmp <- ggplot_gtable(ggplot_build(p1))
+leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+mylegend <- tmp$grobs[[leg]]
+
+p3 <- grid.arrange(arrangeGrob(p1 + theme(legend.position="none"),
+                         p2 + theme(legend.position="none"),
+                         nrow=1),
+             mylegend, nrow=2,heights=c(10, 2))
+
+p3
+ggsave("../ms/fig/continuous_outcomes_simulation_power.pdf", p3, device="pdf", width=8)
+
 ```
