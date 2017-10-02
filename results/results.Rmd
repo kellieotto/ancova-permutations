@@ -39,6 +39,7 @@ These endpoints were measured on a discrete scale.
 There were several additional endpoints, such as daily regurgitation, daily “hrdq”, and daily dyspepsia, calculated from the survey measures. 
 Daily “hrdq” was the primary endpoint. 
 To reduce day-to-day variation, we averaged the measures from each week to obtain two observations per patient, one pre-treatment and one post-treatment.
+These averages are no longer discrete ordinal values, but they are not continuous either: they can only take a finite set of values.
 
 In what follows, we compare the parametric ANCOVA, the stratified permutation test, and the two linear model-based permutation tests.
 We begin by walking through the tests in detail using the primary endpoint.
@@ -46,6 +47,13 @@ We illustrate different ways of controlling for the baseline measure: including 
 The original analysis of the dataset controls for baseline by including it in the model, so for consistency we choose that method for our final analysis.
 We conclude by running the tests for each endpoint.
 
+We show that the data may violate the assumptions for the parametric ANCOVA.
+In particular, the outcome variables and the linear regression residuals are skewed to the right, and there is evidence of heteroskedasticity.
+The small $p$-values that come from the parametric analysis may therefore be unreliable.
+However, the permutation tests yield only slightly larger $p$-values.
+The correspondence between parametric and permutation test results gives some confidence that the results are stable and reliable.
+
+\newpage
 
 # Data Cleaning
 
@@ -100,7 +108,8 @@ reshape_data <- function(variable, data = data_by_subjid_visitnum){
 
 ```
 Figure \ref{fig:hist_continuous_vars} shows the distribution of the final outcome measures between the two treatment groups.
-Based on these distributions, we would expect to detect a difference in outcomes between the treatments for the `daily_heart`, `daily_hrdq`, and `heart_freq` measures.
+Table 1 shows the means of the distributions.
+Based on these summary statistics, we would expect to detect a difference in outcomes between the treatments for the `daily_heart`, `daily_hrdq`, and `heart_freq` measures.
 
 ```{r hist_continuous_vars, fig.align="center", fig.height=6, fig.width=12, fig.cap = "Comparison of the distributions of the seven continuous clinical endpoints during week 2 for the two treatment groups."}
 
@@ -143,8 +152,41 @@ dev.off()
 do.call(grid.arrange, c(plot_distrs, nrow = 2))
 ```
 
+```{r summary_tab, results = "asis"}
+outcome_summary <- clinical %>% 
+  group_by(tr) %>% 
+  summarise(mean(daily_heart),
+    mean(daily_regurg), 
+    mean(daily_dysp),
+    mean(daily_hrdq), 
+    mean(heart_freq),
+    mean(regurg_freq), 
+    mean(dysp_freq)) %>%
+  select(-tr) %>%
+  round(2) %>% t()
+outcome_sds <- clinical %>% 
+  group_by(tr) %>% 
+  summarise(sd(daily_heart),
+    sd(daily_regurg), 
+    sd(daily_dysp),
+    sd(daily_hrdq), 
+    sd(heart_freq),
+    sd(regurg_freq), 
+    sd(dysp_freq)) %>%
+  select(-tr) %>%
+  round(2) %>% t()
+outcome_summary <- cbind(outcome_summary[, 1],
+                         outcome_sds[, 1],
+                         outcome_summary[, 2],
+                         outcome_sds[, 2])
+colnames(outcome_summary) <- c("Mean A", "SD A", "Mean B", "SD B")
+rownames(outcome_summary) <- continuous_vars
+print(xtable(outcome_summary, caption = "Mean and standard deviation of each continuous outcome in groups A and B."), include.rownames = TRUE)
 
-Table 1 shows the correlation between baseline and outcome for each variable.
+
+```
+
+Table 2 shows the correlation between baseline and outcome for each variable.
 Correlations range between 0.548 and 0.696.
 This suggests that using the difference in outcome and baseline as the dependent variable in the following models might yield higher power than controlling for baseline as a covariate.
 
@@ -170,6 +212,7 @@ summarytabc <- xtable(baseline_outcome_corr,
              label = "tab:clinical_corr")
 print(summarytabc, include.rownames = TRUE)
 ```
+\newpage
 
 # Analysis - Primary endpoint
 To illustrate the different methods, let's first restrict attention to the primary endpoint, `daily_hrdq`.
@@ -208,19 +251,21 @@ print(xtable(summary_stats_hrdq,
       include.rownames = TRUE)
 ```
 
+\newpage
 
 ## Parametric ANCOVA
 
 ```{r hrdq_parametric, results = "asis"}
 # method 0: parametric ANCOVA
 lm1 <- lm(Outcome ~ Baseline + tr + factor(SITEID), data = daily_hrdq)
-print(xtable(summary(aov(lm1))), include.rownames = TRUE)
 daily_hrdq$lm1_resid <- residuals(lm1)
+daily_hrdq$lm1_fitted <- fitted(lm1)
 
 lm2 <- lm(difference ~ tr + factor(SITEID), data = daily_hrdq)
-print(xtable(summary(aov(lm2))), include.rownames = TRUE)
 daily_hrdq$lm2_resid <- residuals(lm2)
+daily_hrdq$lm2_fitted <- fitted(lm2)
 ```
+
 
 First, we do a standard parametric ANCOVA using the two models.
 Under model 1, using the outcome as response and adjusting for the baseline value, treatment has a significant effect with p-value `r round(summary(aov(lm1))[[1]]["tr", "Pr(>F)"], 3)`.
@@ -231,6 +276,32 @@ and coerces the variable type from string to factor behind the scenes.
 Be very careful when you're doing this!
 It is generally safer to change types yourself.)
 
+```{r hrdq_parametric_tab, results = "asis"}
+print(xtable(summary(aov(lm1))), include.rownames = TRUE)
+print(xtable(summary(aov(lm2))), include.rownames = TRUE)
+```
+
+```{r residual_plot_lm_hrdq, fig.align="center", fig.height = 3, fig.cap = "Residual plots for the ANCOVA model of daily hrdq."}
+p01 <- daily_hrdq %>% 
+  ggplot(aes(x = lm1_fitted, y = lm1_resid)) +
+  geom_point() + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted Values") + ylab("Residual") + 
+  ggtitle("Raw Outcome Model") +
+  theme_bw()
+p02 <- daily_hrdq %>% 
+  ggplot(aes(x = lm2_fitted, y = lm2_resid)) +
+  geom_point() + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted Values") + ylab("Residual") + 
+  ggtitle("Differenced Model") +
+  theme_bw()
+grid.arrange(p02, p01, nrow=1)
+```
+
+Figure \ref{fig:residual_plot_lm_hrdq} shows the fitted values versus residuals for the two ANCOVA models.
+The residuals of the raw outcome model appear to increase in magnitude with the fitted value, casting doubt on the assumption that the error variance is constant.
+The plot reveals that the differenced model only yields a few predicted values, but does not seem to indicate heteroskedasticity.
 
 ## Stratified permutation test
 
@@ -407,7 +478,7 @@ data.frame("perm" = c(lm1_t_distr, lm2_t_distr),
 The p-values for the differenced model and raw outcome model are `r round(lm_pvalue_2, 3)` and `r round(lm_pvalue_1, 3)`, respectively.
 
 
-### Linear model residuals
+### Freedman-Lane test of residuals
 
 Let's take an alternative view of the problem.
 We still write $Y = \beta_0 + \beta_1 X + \beta_2 Z + \varepsilon$.
@@ -455,10 +526,11 @@ print(xtable(obs_corr, digits = 2,
 By construction of the linear model, the correlation between the baseline measure and the residuals is zero.
 However, we would like to check formally that $\varepsilon$ is independent baseline measure for each site, using the residuals as a proxy for $\varepsilon$.
 To do so, we conduct independent permutation tests within each stratum using the Pearson correlation as the statistic.
-Table 3 shows the results of this test: while the correlation between baseline and residuals appears high, it is not statistically significant at the 5\% level in any stratum.
+Table 5 shows the results of this test: while the correlation between baseline and residuals appears high, it is not statistically significant at the 5\% level in any stratum.
 The Fisher's combined $p$-value for the 8 strata is `r round(fisher_combined_corr, 2)`, so there is no evidence that the independence assumption is violated.
 
 ```{r residual_plots, echo = FALSE, message = FALSE, fig.align = "center", fig.height = 5, fig.cap = "Residual plots of the linear regression of daily hrdq on treatment and covariates. These are done to check that treatment and covariates are uncorrelated with the regression errors for the Freedman and Lane style permutation test."}
+
 p11 <- daily_hrdq %>% 
   select(-Outcome, -difference) %>% 
   melt(id.vars = c("SUBJID", "Baseline", "SITEID")) %>%
@@ -586,8 +658,13 @@ print(xtable(pvalues_table, digits = 3,
 
 We restrict our attention to the model using treatment measurement and controlling for the baseline, as this is what RB's original analysis does.
 We run this procedure for all seven continuous endpoints.
-Table 5 shows the results.
+Table 6 shows the results.
 
+Figure \ref{fig:residual_plots_lm} displays the residuals versus fitted values for the linear model using each response variable.
+The figures cast doubt on the assumption of constant error variance in the linear model: they indicate that the variance of the residuals increases with the fitted values and the distribution of residuals may have some right skew.
+The assumption of normally distributed errors with constant variance is important for the parametric analysis of the ANCOVA model, but does not apply to the permutation tests.
+Across all tests, the parametric ANCOVA $p$-value is smaller than the linear model permutation test $p$-values.
+Perhaps this is partly due to the heteroskedasticity: the permutation tests make no distributional assumptions, so may be less sensitive to large outcomes or residuals.
 ```{r results_table_make}
 set.seed(919547773) # Generated on Random.org Timestamp: 2016-11-09 15:39:29 UTC
 
@@ -635,6 +712,19 @@ for(i in seq_along(continuous_vars)){
 ```
 
 
+```{r residual_plots_lm, fig.align = "center", fig.cap = "Residual plots for the linear regression of outcome on baseline, treatment, and stratum ID for each response variable."}
+
+pplot <- vector("list", 7)
+for(i in seq_along(continuous_vars)){
+  col <- continuous_vars[i]
+  tmpdata <- reshape_data(col)
+  lm1 <- lm(Outcome ~ Baseline + tr + factor(SITEID), data = tmpdata)
+  tmpdata <- tmpdata %>% mutate("Residuals" = residuals(lm1), "Fitted" = fitted(lm1))
+  pplot[[i]] <- ggplot(tmpdata, aes(x = Fitted, y = Residuals)) + geom_point() + ggtitle(continuous_vars[i]) +
+  theme_bw()
+}
+do.call(grid.arrange, c(pplot, nrow= 2))
+```
 
 ```{r results_table_print, echo=FALSE, results = "asis", fig.align = "center", fig.cap = "Comparison of $p$-values from four tests, for each continuous endpoint."}
 rownames(pvalues_table_contin) <- continuous_vars
