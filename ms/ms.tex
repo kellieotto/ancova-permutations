@@ -1,6 +1,6 @@
 \documentclass[12pt]{article}
 
-\usepackage{amsmath}
+\usepackage{amsmath, amsthm}
 \usepackage{graphicx}
 \usepackage{enumerate}
 \usepackage{natbib}
@@ -74,10 +74,10 @@ These tests are derived using strong assumptions about the data-generating proce
 Because these methods are well understood and robust, they are sometimes applied to data that depart from assumptions, such as ordinal integer scores.
 Permutation tests are a nonparametric alternative that require minimal assumptions which are often guaranteed by the randomization that was conducted.
 We compare analysis of covariance (ANCOVA), a special case of linear regression that incorporates stratification, to several permutation tests based on linear models that control for pretreatment covariates.
-In simulations using a variety of data-generating processes, some of which violate the parametric assumptions,
+In several simulations of randomized experiments using a model in which certain regression assumptions are violated,
 the permutation tests maintain power comparable to ANCOVA.
-We illustrate the use of these permutation tests alongside ANCOVA with data from a clinical trial comparing the effectiveness of two treatments for gastroesophageal reflux disease.
-Given the considerable costs and scientific importance of clinical trials, one may want to include an additional nonparametric method, such as a linear model permutation test, as a robustness check on the statistical inference for the main study endpoints.
+We illustrate the use of these permutation tests alongside ANCOVA using data from a clinical trial comparing the effectiveness of two treatments for gastroesophageal reflux disease.
+Given the considerable costs and scientific importance of clinical trials, an additional nonparametric method, such as a linear model permutation test, may serve as a robustness check on the statistical inference for the main study endpoints.
 \end{abstract}
 
 \noindent%
@@ -89,19 +89,24 @@ Given the considerable costs and scientific importance of clinical trials, one m
 \section{Background}
 A hypothesis test is a statistical method for determining whether observed data is consistent with a belief about the process that generated the data.
 Medical experiments use hypothesis testing to assess the evidence that a treatment affects one or more clinically relevant outcomes.
-The simplest version of this experiment involves randomly assigning two treatments to a fixed number of individuals in a group and measuring a single outcome, and has been studied for nearly a century (see \cite{fisher_design_1935} and \cite[1990 translation]{neyman_application_1923} for early references).
+The simplest version of this experiment has been studied for nearly a century (see \cite{fisher_design_1935} and \cite[1990 translation]{neyman_application_1923} for early references).
+This experiment involves randomly assigning two treatments to a fixed number of individuals in a group and measuring a single outcome.
 One can conduct hypothesis tests and construct confidence intervals for the estimated treatment effect
 by exploiting the fact that the difference in average outcomes between the two treatment groups is asymptotically normal with a variance that can be estimated from the data.
 
-Randomized experiments in the real world are rarely this simple:
-if individuals are heterogeneous before the study, then their outcomes may differ for reasons besides the treatment;
-there may be more than two treatments under study;
-patients may not take the treatment they are assigned or may drop out of the study;
-and peer effects, the influence of other members of a treatment group, may affect outcomes beyond the treatment itself.
-Techniques have been developed to deal with each of these issues, invoking additional assumptions to make valid inference possible.
-In this paper, we focus on the issue of heterogeneous pretreatment characteristics and assume that the other issues are not present.
+%Randomized experiments in the real world are rarely this simple:
+%if individuals are heterogeneous before the study, then their outcomes may differ for reasons besides the treatment;
+%there may be more than two treatments under study;
+%patients may not take the treatment they are assigned or may drop out of the study;
+%and peer effects, the influence of other members of a treatment group, may affect outcomes beyond the treatment itself.
+%Techniques have been developed to deal with each of these issues, invoking additional assumptions to make valid inference possible.
+%In this paper, we focus on the issue of heterogeneous pretreatment characteristics and assume that the other issues are not present.
 
-Random assignment of treatment ensures that pretreatment covariates are balanced between treatment groups on average, across all possible randomizations.
+The goal of a randomized experiment is to draw causal inferences about the efficacy of a treatment.
+Thus, it makes sense to analyze experiments in the context of potential outcomes, where every individual has a counterfactual outcome for each of the treatments (\cite{holland_1986_statistics})
+Experiments are an attempt to estimate the counterfactual outcomes by randomly assigning treatments.
+Random assignment of treatment ensures that pretreatment covariates are balanced between treatment groups on average, across all possible randomizations, making treatment groups comparable to each other.
+
 However, in any particular randomization, there may be imbalances.
 If the imbalanced variables are associated with the outcome, then even when treatment has no effect, there may be differences in outcomes between treatment groups.
 Adjusting for such covariates can reduce the variability of treatment effect estimates and yield more powerful hypothesis tests.
@@ -112,30 +117,29 @@ These groups are defined during the design stage (i.e. before outcome data are c
 Random assignment of treatments is conducted within each stratum, independently across strata.
 This guarantees that the stratification variable is balanced between treatment groups.
 A common stratification variable in clinical experiments is location:
-individuals often come from many sites because it is difficult to recruit a sufficient number of participants at one doctor's office or hospital,
+individuals often come from many locations because it is difficult to recruit a sufficient number of participants at one site,
 especially when the object of study is a rare disease or a rare outcome.
-Stratification can have the same beneficial effects as controlling for other pretreatment covariates, 
-as outcomes may vary across strata due to factors unrelated to individuals' treatment and covariates.
 
-Linear regression is another way to control for imbalanced baseline covariates.
+Linear regression is another method to control for imbalanced baseline covariates.
 It is done during the data analysis stage.
 In its simplest form, linear regression projects the outcomes onto the plane that best summarizes each variable's relationship to the outcome.
 The coefficient of any particular covariate answers the question, if we were to hold fixed all other variables and increase this variable by one unit, how much would we expect the outcome to change?
 This model posits a linear relationship between covariates, treatment, and outcome; 
 if the true relationship is not linear, then linear regression gives the best linear approximation to the conditional expectation of the outcome.
-It is standard to use analysis of covariance (ANCOVA) to account for stratification in a linear model.
+It is standard to use analysis of covariance (ANCOVA) to incorporate stratification in a linear model.
 ANCOVA is a particular case of linear regression that allows the mean outcome to vary from stratum to stratum.
 This amounts to fitting a plane to each stratum, with the constraint that they have a common slope.
 
-Hypothesis testing of estimated coefficients requires even stronger assumptions than linearity, namely Gaussian, homoskedastic errors.
-When this holds, a regression coefficient scaled by its estimated variance follows Student's $t$ distribution.
-Thus, if we believe the linear model is correctly specified, a hypothesis test for a treatment effect amounts to a hypothesis test of the coefficient for treatment in the ANCOVA model, and can be evaluated analytically and efficiently.
-However, the modeling assumptions are clearly violated in many cases:
-when the data are discrete or ordinal, 
-when the treatment has a differential effect across subgroups of individuals and no interaction terms are included, 
-and when the variance of outcomes differs across strata.
-Furthermore, the hypothesis test implicitly assumes that the data were sampled at random from some underlying population, when in fact,
-medical experimenters rarely recruit patients this way (\cite{ludbrook_why_1998}).
+Hypothesis testing of estimated coefficients requires even stronger assumptions which are not guaranteed by the experimental design.
+When the assumptions hold, a hypothesis test for a treatment effect amounts to a hypothesis test of the coefficient for treatment in the ANCOVA model, and can be evaluated analytically and efficiently.
+A fully saturated linear model can yield asymptotically consistent estimates and confidence intervals (\cite{lin_agnostic_2013}).
+This is especially problematic in medical trials, where conditions are not always ideal for the linear model to work well:
+linear models can have substantial bias in small samples (\cite{freedman_regression_2008}),
+outcomes are often discrete or ordinal, 
+the treatment may have a differential effect across subgroups of individuals, 
+and when the distributions of outcomes may differ across strata.
+%Furthermore, the hypothesis test implicitly assumes that the data were sampled at random from some underlying population, when in fact,
+%medical experimenters rarely recruit patients this way (\cite{ludbrook_why_1998}).
 
 Permutation testing is an alternate approach (\cite{fisher_design_1935, pitman_significance_1937,pitman_significance_1938}).
 Deliberate randomization induces a distribution for any test statistic under the null hypothesis that treatment has no effect on the outcome:
@@ -165,7 +169,7 @@ We conclude in Section~\ref{sec:discussion} with implications of these results f
 \subsection{Notation}
 Suppose we have a finite population of $N$ individuals.
 Individuals are grouped into strata indexed by $j = 1, \dots, J$, with $n_j$ individuals in stratum $j$ and $\sum_{j=1}^J n_j = N$.
-Of the $n_j$ subjects in stratum $j$, $n_{tj}$ are assigned treatment 1, while the remaining $n_j - n_{tj}$ are assigned treatment 0.
+Of the $n_j$ subjects in stratum $j$, $n_j^T$ are assigned treatment 1, while the remaining $n_j - n_j^T$ are assigned treatment 0.
 Let $Z_{ij}$ indicate the treatment assigned to individual $i$ in stratum $j$.
 
 All individuals have two potential outcomes, $Y_{ij}(1)$ and $Y_{ij}(0)$, representing their responses to treatments $1$ and $0$, respectively.
@@ -178,19 +182,21 @@ and that there is no censoring or non-compliance
 
 Furthermore, we observe a covariate $X_{ij}$ that may be associated with the outcome.
 For expository clarity, we suppose that $X$ is univariate, but all results are easily extended to the case when $X$ is multivariate.
-Suppose further that there is a categorical pretreatment variable with $J$ levels used to stratify individuals. 
+$X$ may be associated with stratum membership.
 
 We are interested in the effect of treatment, measured as differences in potential outcomes $Y_{ij}(1) - Y_{ij}(0)$.
-We may never learn this difference for any particular individual.
-However, a tractable problem is to estimate the mean difference in some group, such as the study sample or in a target population.
-The chosen method of analysis determines which function of differences is considered.
-Various functions of potential outcomes may be of clinical interest; which one prefers depends on the goal of the study.
+We can never learn this difference for any particular individual.
+However, a tractable problem is to estimate the mean difference in the study sample or in a target population.
+Various functions of potential outcomes may be of clinical interest; the goal of the study and the method of analysis determine which function is considered.
 
 We study hypothesis testing for whether these differences are nonzero using parametric ANCOVA and its permutation counterparts, assuming this potential outcomes framework throughout.
-Other valid methods for comparing two groups include using a two-sample $t$-test to test the difference in two means from normal distributions,
+Other valid methods for comparing two groups include using a two-sample $t$ test to test the difference in two means from normal distributions,
 the Wilcoxon rank sum test to test for differences in the medians of two independent groups, 
 and the Kolmogorov-Smirnov test and receiver operating characteristic curve analyses to test whether two groups have different distribution functions (\cite{lehmann_nonparametrics_1975,  vexler_statistical_2016}).
-We focus on testing using the linear model as this is standard in clinical trials, requires fewer distributional assumptions on the data when using the potential outcomes framework, and incorporates control variables to increase power.
+We focus on testing using the linear model as this is standard in clinical trials, 
+requires fewer distributional assumptions on the data when using the potential outcomes framework, 
+deals with averages,
+and incorporates control variables to increase power.
 
 
 \subsection{Parametric ANCOVA}\label{subsec:ancova}
@@ -213,54 +219,65 @@ However, we needn't take this perspective for $\gamma$ to be a useful quantity; 
 
 
 To carry out the standard parametric hypothesis test for a linear model, the following assumptions are needed (\cite{freedman_statistical_2005}):
-\begin{enumerate}
+\begin{itemize}
 \item \textbf{Linearity:} The data $Y$ are related to $X$ and $Z$ linearly.
 \item \textbf{Constant slopes:} Stratum membership only affects the intercept $\alpha_j$, not the slopes $\beta$ and $\gamma$.
 \item \textbf{IID Errors:} The $\varepsilon_{ij}$ are independent and identically distributed with mean $0$ and common variance $\sigma^2$.
 \item \textbf{Independence:} If $X$ is random, $\varepsilon$ is statistically independent of $X$.
 \item \textbf{Normality:} The errors are normally distributed.
-\end{enumerate}
+\end{itemize}
 
 The coefficients are estimated using least squares (or equivalently, by maximizing the likelihood).
-The estimated coefficient $\hat{\gamma}$ is the estimated average treatment effect. 
+The coefficient $\hat{\gamma}$ is the estimated average treatment effect. 
 This procedure also yields an estimate $\hat{\sigma}_{\hat{\gamma}}^2$ of the variance of $\hat{\gamma}$.
 Under the null hypothesis, the test statistic 
 $$ T = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}}$$
 follows the Student $t$ distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
 The $p$-value for this hypothesis test is the probability, assuming the null hypothesis of zero coefficient is true, that a value drawn from the $t$ distribution is larger in magnitude than the observed $T$.
-This test is equivalent to the $F$-test.
+This test is equivalent to the $F$ test.
 When the model assumptions are true, it is uniformly most powerful.
 
-However, in the context of a randomized experiment, these assumptions will not be satisfied.
-The estimated treatment effect $\hat{\gamma}$ and nominal standard errors $\hat{\sigma}_{\hat{\gamma}}$ can be severely biased (\cite{freedman_regression_2008, lin_agnostic_2013}).
+The linear model is robust to violations of its assumptions, but theoretical guarantees tend to be asymptotic.
+When randomized experiments are analyzed in the parametric framework, which assumes that treatment assignment is fixed and the errors are random,
+the estimated treatment effect $\hat{\gamma}$ and nominal standard errors $\hat{\sigma}_{\hat{\gamma}}$ can be severely biased (\cite{freedman_regression_2008, lin_agnostic_2013}).
 \cite{lin_agnostic_2013} shows that running a regression with a full set of treatment and covariate interaction terms cannot hurt asymptotic precision, and using the Huber-White sandwich standard errors can yield asymptotically valid confidence intervals.
 In small samples, the bias may still be substantial.
 \cite{miratrix_adjusting_2013} show that post-stratification, estimating treatment effects within groups of similar individuals defined after data are collected, can ameliorate this bias.
 This is equivalent to estimating a fully saturated linear model with interaction terms for treatment and stratum membership.
 The linear ANCOVA model does not account for variation in the treatment effect across strata in this way;
 if the difference in potential outcomes is heterogeneous across strata, then the coefficient $\gamma$ may be attenuated towards 0.
+Thus, it is unclear for any particular dataset whether or not the ANCOVA model will give valid results.
 
 
 \subsection{Stratified permutation test}\label{subsec:strat_perm_test}
-In randomization inference, the only random quantities are those involving $Z$, the vector of treatment assignments.
-The exact inference is derived from the randomization distribution of statistics involving $Z$.
-In particular, the potential outcomes and covariates $(Y_{ij}(1), Y_{ij}(0), X_{ij})$ are fixed in the finite population under study, while the observed response $Y_{ij}$ changes with $Z_{ij}$.
-
+All permutation tests essentially have two requirements: a conditioning space, the orbit of a finite group of transformations of the data in which all configurations of the data are equiprobable under the null hypothesis, and a set of sufficient statistics for the data which describe the data under these transformations.(\cite{pesarin_permutation_2010}).
+%We describe these two elements in the context of a stratified randomized experiment.
+In experiments, the only random quantities are those involving $Z$, the vector of treatment assignments.
+In particular, the potential outcomes and covariates are fixed in the finite population under study, while the observed responses change with $Z$.
+The exact permutation inference is derived from the conditioning space which includes all possible values of $Z$.
 
 Suppose we wish to test the null hypothesis that individual by individual, treatment has no effect.
 This is referred to as the ``sharp'' null hypothesis:
 
 $$H_0: Y_{ij}(1) = Y_{ij}(0), \forall i = 1, \dots, n_j, j = 1,\dots, J.$$
 
-
 Under the null hypothesis, which treatment an individual received amounts to an arbitrary label.
 Once we observe one response under a particular treatment, we can impute the other potential outcome; namely, it would have been the same  (\cite{rosenbaum_covariance_2002}).
 Thus, the observed $Y_{ij}$ form a sufficient statistic for the data (\cite{pesarin_permutation_2010}).
 This null hypothesis is stronger than the null hypothesis for the parametric ANCOVA, which only asserts that differences in potential outcomes are zero \textit{on average}.
 
-In a randomized experiment with complete randomization, any randomization that assigns $n_j$ individuals to treatment 1 in stratum $j$ for each stratum has equal probability.
+In an experiment with complete randomization, any of the possible allocations of treatment that assign $n_j^T$ out of $n_j$ individuals to treatment 1 in stratum $j$, for each stratum $j=1,\dots,J$, has equal probability.
 We can construct the permutation distribution of any statistic under the null hypothesis by imputing the unobserved potential outcomes using the sharp null hypothesis and by re-randomizing treatment assignments using this principle of equal probabilities.
-The experimental design specifies the permutation scheme; no additional assumptions are necessary.
+The experimental design specifies the permutation scheme; no additional assumptions are needed to find the distribution of any statistic.
+In practice, the $\prod_{j=1}^J {n_j \choose n_j^T}$ possible allocations of treatment may be too numerous to compute the statistic for each one.
+Instead, we typically use Monte Carlo simulations to randomly assign treatment and compute the statistic of interest a large number of times to approximate the randomization distribution to a desired degree of accuracy.
+
+To summarize, the assumptions for the stratified permutation test are the following.
+\begin{itemize}
+\item \textbf{Complete randomization:} the $\prod_{j=1}^J {n_j \choose n_j^T}$ assignments of treatment which assign $n_j^T$ out of $n_j$ individuals to treatment 1 in stratum $j$, for each stratum $j=1,\dots,J$, has equal probability
+\item \textbf{No treatment effect under the null:} both potential outcomes are identical and equal to the observed outcome for each individual $(i, j)$
+\end{itemize}
+
 
 The most commonly used statistic is the difference in mean outcomes of subjects who received treatment 1 and the mean outcomes of subjects who received treatment 0.  
 This statistic is unbiased over all possible random assignments of treatment which preserve the number of treated individuals,
@@ -278,22 +295,25 @@ Taking the absolute value before summing ensures that effects with different sig
 Another way to construct a test is to use the nonparametric combination (NPC) framework proposed by \citet{pesarin_permutation_2010}.
 In this framework, the ``global'' null hypothesis of no effect whatsoever is decomposed into the intersection of ``partial'' null hypotheses of no treatment effect within each stratum.
 For NPC, one first conducts each partial test separately, then combines their $p$-values in a way that preserves dependencies.
-This method is equivalent to combining stratum statistics directly when data are from a randomized experiment, because treatment is independent across strata.
+For a randomized experiment, this method is equivalent to combining stratum statistics directly, because treatment is independently assigned across strata.
 
 
 \subsection{Permutation tests with the linear model}\label{subsec:lm_perm_tests}
+
 The tests in Section~\ref{subsec:strat_perm_test} only use information on the treatment and the outcome.
-However, experimenters record additional covariates that may be predictive of the outcome.
-A test that incorporates these covariates may reduce the variance of the statistic and have more power.
-The permutation tests in this section use the linear model in Equation~\ref{eqn:ancova}, but make different assumptions about the data.
+However, experimenters typically record additional covariates that may be predictive of the outcome.
+Incorporating these covariates can reduce variation in the statistic due to factors unrelated to treatment, thereby increasing power to detect a treatment effect.
+The permutation tests in this section use the linear model in Equation~\ref{eqn:ancova} to control for covariates, but make different assumptions about the data.
 In a randomized experiment, the treatment assignment is independent of covariates, errors, and potential outcomes,
 making several variables exchangeable.
 We show two permutation tests developed in this framework.
+They test the same ``sharp'' null hypothesis of no treatment effect.
 
 The first linear model permutation test is a variation on the stratified permutation test described in Section~\ref{subsec:strat_perm_test}.
+The assumptions are the same.
 The only difference is the test statistic:
 this test uses the $t$ statistic for the regression coefficient of $Z$ in the linear model in Equation~\ref{eqn:ancova}.
-Rather than using the $t$ distribution to calculate the significance of the observed $t$ statistic, we construct the permutation distribution of the $t$ statistic.
+Rather than using the $t$ distribution to calculate the significance of the observed $t$ statistic, we construct the permutation distribution of the $t$ statistic by simulation.
 Again, the experimental design specifies the randomization distribution and no additional assumptions are needed:
 $Z$ is independent of $(Y(1), Y(0), X)$ conditional on strata.
 
@@ -306,17 +326,22 @@ If the null hypothesis is true, then $\gamma = 0$ and $\varepsilon_{ij} = Y_{ij}
 Therefore, we may estimate the errors by $\hat{\varepsilon} =Y - \hat{Y}$, where $\hat{Y}$ is the vector of fitted values from the regression of $Y$ on $X$ but not $Z$.
 The $\hat{\varepsilon}$ approximate the true errors $\varepsilon$ from the true data-generating process, assuming that the null hypothesis is true.
 Furthermore, under the null hypothesis, the $\varepsilon$ are independent of $Z$ within strata. 
-Thus, we can carry out an approximate permutation test by permuting the estimated $\hat{\varepsilon}$ within strata, independently across strata.
 
-The test has two important assumptions:
-the relationship between $Y$ and $X$ is linear and errors are IID within strata.
-Together, these conditions ensure that $\varepsilon$ are exchangeable against $X$ within strata.
-In practice, we must estimate $\alpha$; using $\hat{\alpha}$ to estimate $\hat{Y}$ yields an approximate permutation test.
+We can carry out an approximate permutation test by permuting the estimated $\hat{\varepsilon}$ within strata, independently across strata.
+The test is only approximate because we must estimate $\alpha$ and $\beta$ to construct $\hat{\varepsilon}$.
+The test has two important assumptions pertaining specifically to the linear regression, on top of the two necessary pieces of a permutation test:
+\begin{itemize}
+\item \textbf{Linear model:} the linear model that describes $Y$ using $X$ and the approximation error $\varepsilon$ holds
+\item \textbf{Linear regression fit:} the linear regression residuals $\hat{\varepsilon}$ are a good approximation to the true errors $\varepsilon$ 
+\item \textbf{Conditioning space:} the $\varepsilon$ are exchangeable against $X$ within strata
+\item \textbf{No treatment effect under the null:} the $\varepsilon$ do not depend on $Z$
+\end{itemize}
+
 The $\hat{\varepsilon}$ may not even be approximately exchangeable within strata if the regression does not describe the relation between $Y$ and $X$ well.
 For this reason, \cite{freedman_nonstochastic_1983} advise against using the method if there are large outlier values in the covariate $X$ or when $X$ and $Z$ are highly colinear.
-Randomization does not guarantee this additional exchangeability assumption, so it should be checked.
+Randomization does not guarantee the exchangeability against $X$, so this assumption should be checked.
 One way, suggested by \cite{freedman_nonstochastic_1983}, is to visually inspect a scatterplot of the residuals against $X$.
-One may also run a hypothesis test for association, such as a stratified permutation test using the correlation as a statistic, independently within each stratum and use the nonparametric combination of tests to obtain a single $p$-value (\cite{pesarin_permutation_2010}).
+One may also test for association between $X$ and $\hat{\varepsilon}$, such as a stratified permutation test using the correlation as a statistic, independently within each stratum and use the nonparametric combination of tests to obtain a single $p$-value (\cite{pesarin_permutation_2010}).
 
 
 To summarize the steps for constructing a permutation distribution:
@@ -346,21 +371,22 @@ Therefore, throughout the rest of the paper we focus on the two linear regressio
 \section{Simulations}\label{sec:simulations}
 
 We simulated data from a randomized experiment using several different data-generating processes.
-We applied the tests to the data and compared their empirical power over repeated random treatment assignments and random errors.
+The variables included stratification, two randomly assigned treatments, a baseline measure before treatment, and the same variable measured after treatment.
+We tested for a treatment effect and compared the empirical power of the tests over repeated random treatment assignments.
 We compared the following five tests:
 the $t$ test from the parametric ANCOVA,
 a stratified permutation test using the difference in mean outcomes
  (called ``stratified permutation'' in what follows),
-a stratified permutation test using the mean change scores, defined as the difference between the baseline measure and the outcome (called ``differenced permutation'' in what follows),
+a stratified permutation test using the mean change scores, defined as the difference between the outcome and baseline measure (called ``differenced permutation'' in what follows),
 a stratified permutation test based on the $t$ statistic from the linear regression of outcome on control variables (called ``LM permutation'' in what follows),
 and the Freedman-Lane permutation test.
-The simulations are included in three supplementary files.
+The simulation code is included in four supplementary files.
 
 \subsection{Continuous outcomes}
 
-In the first set of simulations, we generated continuous potential outcomes.
+In the first set of simulations, we generated continuous potential outcomes based on a latent variable and disturbance terms, both of which we manipulated.
 We used two scenarios.
-In the first, the treatment effect was constant across strata.
+In the first scenario, the treatment effect was constant across strata.
 We drew a latent random variate $v_{ij}$ from the uniform distribution on $[-4, 4]$.
 In the second scenario, the treatment effect varied across strata, and we drew the latent random variable according to
 \begin{displaymath}
@@ -380,47 +406,58 @@ standard lognormal,
 or exponentially distributed, with scale parameter $1$ and shifted to have mean zero.
 The observed $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$ were independent across $i$ and $j$.
 
-The baseline value for individual $i,j$ was 
-$$ X_{ij} = \frac{\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \varepsilon_{ij}$$.
+We included $n_j=16$ individuals per stratum and treatment assignment was balanced, i.e. 8 people received each treatment in each stratum.
+After sampling $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$, we constructed the baseline value for individual $i,j$ as 
+$$ X_{ij} = \frac{-\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \varepsilon_{ij}.$$
 
+\noindent $\gamma$ was a fixed constant.
 Then we generated potential outcomes as
 
 $$Y_{ij}(Z_{ij}) = \frac{(2Z_{ij} - 1)\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \delta_{ij}.$$
 
-We included $n_j=16$ individuals per stratum and treatment assignment was balanced, i.e. 8 people received each treatment in each stratum.
-After sampling $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$, we regenerated $Z$ and the potential outcomes $Y(Z)$ 10,000 times.
-We repeated this procedure for each distribution of latent variables $v$ and of the errors $\varepsilon$ and $\delta$.
 
+\noindent This is equivalent to the following linear data-generating process:
+
+$$Y_{ij}(Z_{ij}) = Z_{ij} \gamma e^{v_{ij}} + X_{ij} + (\delta_{ij} - \varepsilon_{ij}).$$
+
+\noindent This model does not exactly match the ANCOVA Equation~\ref{eqn:ancova} and only some of the assumptions are satisfied:
+$Y$ is linear in $(X, Z)$ conditionally on the latent variable $v$, 
+the errors are independent and identically distributed, and are independent of $X$.
+When the latent variables vary in distribution across strata, the assumption of constant slopes is violated.
+
+
+We regenerated $Z$ and the potential outcomes $Y(Z)$ 10,000 times.
+We repeated this procedure for each distribution of latent variables $v$ and of the errors $\varepsilon$ and $\delta$.
 The treatment effect for individual $(i, j)$ was $\gamma e^{v_{ij}}$.
 We tested whether the treatment had a nonzero effect in the sample using each of the tests described.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width = \textwidth]{fig/continuous_outcomes_simulation_power.pdf}
-\caption{Empirical power curves for the continuous simulated data. The left panel shows power when the treatment effect was constant across strata and the right panel shows power when the treatment effect was heterogeneous.}
+\caption{Empirical power curves for the continuous simulated data with normally distributed $\varepsilon$ and $\delta$. The left panel shows power when the treatment effect was constant across strata and the right panel shows power when the treatment effect was heterogeneous.}
 \label{fig:continuous_outcomes_sim_power}
 \end{figure}
 
-First, we let the $v_{ij}$ have the same distribution across strata, generated normally distributed errors, and varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
+First, we studied how power changed with the average treatment effect.
+We used normally distributed errors and varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
 In the random populations that were generated, this corresponded to population average treatment effects of $0, 0.34, 0.68, 1.02$, and $1.36$ respectively.
 The left panel of Figure~\ref{fig:continuous_outcomes_sim_power} shows the empirical power (rate of rejection in the 10,000 simulations) at level 5\% for these increasing effect sizes.
-When the effect size was zero, all five tests had the correct level of 5\%.
-Power for all tests increased with the effect size, though the differenced permutation test lagged behind the rest.
+When the treatment effect was homogeneous across strata, all five tests had the correct level of 5\% (i.e. the power when $\gamma = 0$).
+Power of the differenced permutation test increased at a slower rate than the other tests.
 This is unsurprising, as the correlation between baseline $X$ and outcome $Y$ was low:
-it was highest at $0.33$ when $\gamma=0$ and decreased to approximately $0$ when $\gamma=0.2$.
-The parametric and permutation linear model tests perform comparably and are plotted on top of each other, while the stratified permutation test has slightly more power.
+its highest value was $0.33$ when $\gamma=0$ and it decreased to nearly $0$ when $\gamma=0.2$.
+The parametric and permutation linear model tests performed comparably and are plotted on top of each other, while the stratified permutation test had slightly more power.
 
-Next, we varied the distribution of $v_{ij}$ across strata and generated normally distributed errors.
-Once again, we varied $\gamma$ and the corresponding population average treatment effects.
-The right panel of Figure~\ref{fig:continuous_outcomes_sim_power} shows the empirical power at level 5\% for these increasing effect sizes.
+The right panel of Figure~\ref{fig:continuous_outcomes_sim_power} shows the empirical power at level 5\% for the same experiment, with heterogeneous treatment effects across strata.
 Four of the five tests had the correct level of 5\%, while the stratified permutation test rejected only 1\% of the time.
 Both the stratified and differenced permutation tests had lower power than the linear model tests as the effect size increased.
 The correlation between baseline $X$ and outcome $Y$ was low but nontrivial (between $0.04$ and $0.44$), so this result makes some sense:
 it is beneficial for power to control for the baseline in the linear model, but the correlation is too low to make the differencing method useful.
+
 Finally, we varied the distributions of the errors $\varepsilon$ and $\delta$ and examined the power of the five tests.
-Recall that these are not errors in the linear model framework, but more like disturbances on the potential outcomes and baseline measures for each individual.
-These disturbances affect the distributions of $X$ and $Y$, which may impact the power of the parametric ANCOVA, and affect the variances of $X$ and $Y$, which may make one method of controlling for the baseline more effective than another.
-We fixed $\gamma=0.2$ and let the errors have a standard normal distribution, a $t$ distribution with 2 degrees of freedom, a standard log normal distribution, or an exponential distribution with parameter $1$, shifted to have mean zero.
+Recall that these are not errors in the linear model framework, but rather disturbances on the potential outcomes and baseline measures for each individual.
+These disturbances affect the distributions of $X$ and $Y$, which may impact the power of the parametric ANCOVA and may make one method of controlling for the baseline more effective than another.
+We fixed $\gamma=0.2$ and varied the distributions of $\varepsilon$ and $\delta$.
 
 The top panel in Table~\ref{tab:power_grid1} shows the empirical power for each of these error distributions and tests, where the $v_{ij}$ came from a single distribution across strata.
 In all cases, the correlation between baseline and outcome was lower than 0.05 in magnitude.
@@ -432,7 +469,7 @@ Power was highest for normally distributed errors and was lowest for $t$ distrib
 The bottom panel of Table~\ref{tab:power_grid1} shows the results when the distribution of $v_{ij}$ varied across strata.
 In this case, the three linear model based tests had the highest power for each error distribution.
 While the correlation between baseline and outcome was still nearly zero, controlling for it in the linear model tended to increase precision.
-The stratified permutation test lost power for this reason.
+Conversely, the stratified permutation test lost power for this reason.
 The differenced permutation test continued to have low power.
 Interestingly, when the errors were $t$ or log normally distributed, the power of each test did not change much whether the treatment effects were constant or heterogeneous across strata.
 However, power was lower for normally distributed errors when treatment effects varied across strata.
@@ -467,8 +504,9 @@ Treatment Effect & Errors & ANCOVA & Stratified Permutation & Differenced Permut
 
 \subsection{Discrete outcomes}
 
-Many outcomes are measured on a discrete, ordinal scale but the same regression-based methods are used to test for a nonzero treatment effect.
-We repeated the procedure above, instead discretizing the covariate $X$ and potential outcomes $Y(Z)$ by taking their floor.
+Many medical outcomes are measured on a discrete, ordinal scale, but the same regression-based methods designed for continuous data are used to test for a nonzero treatment effect.
+These data do not satisfy the ANCOVA assumptions of linearity and of normally distributed errors.
+We repeated the procedure above, instead discretizing the covariate $X$ and potential outcomes $Y(Z)$ by removing their fractional parts.
 We used the same distributions for the latent variables $v$.
 We drew $\varepsilon$ and $\delta$ from independent standard normal distributions, and again we varied $\gamma$ and the population average treatment effect in the same way.
 
@@ -488,184 +526,47 @@ It is interesting to note that for the discrete outcomes, all of the tests had m
 \end{figure}
 
 \subsection{Imbalanced treatment groups}
-%Outcomes were generated according to the linear equation 
-%\begin{equation}\label{eqn:dgp}
-%Y_{ij1} =\alpha_j + \beta_0Y_{ij0} + \gamma_j Z_{ij} + \varepsilon_{ij}
-%\end{equation}
-%
-%\noindent for individuals $i = 1, \dots, n_j$, $j = 1, 2, 3$.
-%$\alpha_j$ is the mean effect of being in stratum $j$, 
-%$\beta_0$ is the coefficient for the baseline measurement $Y_{ij0}$, 
-%$Z_{ij}$ is the treatment level, 
-%$\gamma_j$ is the effect of treatment in stratum $j$, 
-%and $\varepsilon_{ij}$ is an error term.
-%We used three strata with $\alpha_1 = 1, \alpha_2 = 1.5,$ and $\alpha_3 = 2$.
-%
-%We used two designs:
-%\begin{itemize}
-%\item Constant additive treatment effect: $\gamma_1 = \gamma_2 = \gamma_3 = \gamma$. This is the implicit assumption when using a linear model.
-%\item Treatment effect in a single stratum: $\gamma_1 = \gamma > 0$, $\gamma_2 = \gamma_3 = 0$. This is a constant, additive treatment effect in stratum 1, but no treatment effect in strata 2 and 3. This is a simplistic example of a heterogeneous treatment effect. The standard ANCOVA model does not account for this scenario.
-%\end{itemize}
-%
-%\noindent We drew the baseline measurements once, treating them as fixed, and conditioned on observing $\{ Y_{ij0} : {i = 1,\dots,n_j, j = 1,\dots, 3}\}$.
-%We randomly assigned treatment to half of the individuals within each stratum, generated random errors, and constructed new outcomes $Y_{ij1}$ using Equation~\ref{eqn:dgp}.
-%We conducted all five tests on this new data, obtaining a two-sided $p$-value for each.
-%We repeated these steps using the same $\{ Y_{ij0} \}$ 1000 times.
-%
-%In our first set of simulations, we assumed that the baseline measurements $Y_{ij0}$ were standard normally distributed and the pairs $(Y_{ij0}, \varepsilon_{ij})$ were independent across $i$ and $j$.
-%We let $\beta_0 = 1$ and the treatment effect be $\gamma = 1$.
-%We used a balanced design with $n_j = 16$ individuals per stratum and balanced treatment assignment, i.e. 8 subjects received each treatment within each stratum.
-%There were four total simulation designs:
-%for each of the two possible treatment effects, we used two distributions for $\varepsilon$.
-%In the first case, we used $\varepsilon \sim N(0, 1)$ to match the parametric assumption of normal errors.
-%In the second case, $\varepsilon$ were drawn from a $t$ distribution with 2 degrees of freedom so the errors were heavy-tailed.
-%
-%Figure~\ref{fig:normal_sim_power} shows the estimated power curves in these four designs.
-%The best case was when the errors were Gaussian and the treatment effect was constant across strata, while the worst case was when the errors are heavy-tailed and the treatment effect only appeared in one stratum.
-%Intuitively, it makes sense that power decreased relative to the Gaussian, constant treatment effect case, as each violated assumption further obscured the treatment effect.
-%A consistent pattern appeared in each design: the stratified permutation test had the lowest power, while the other four tests tended to have similar power.
-%
-%Table~\ref{tab:normal_power} displays the size of the test and the power at level $0.05$.
-%The three tests based on linear models had slightly higher than nominal level, though the margin was within two standard errors of $0.05$.
-%(The number of tests rejected under the null in 1000 trials has a binomial distribution.
-%If the true level is $0.05$, then the standard error is $\sqrt{0.05 \times 0.95/1000}$.)
-%These numbers show that actually, for $\alpha=0.05$, the stratified permutation test did not lose a large amount of power when the effect was isolated in a single stratum.
-%In this case, the stratified permutation test may have slightly higher power than ANCOVA at the small significance levels typically used in practice.
-%\begin{figure}[h]
-%\centering
-%\includegraphics[width = \textwidth]{fig/normal_simulation_power.pdf}
-%\caption{Empirical power curves for the Gaussian simulated data}
-%\label{fig:normal_sim_power}
-%\end{figure}
-%%\begin{center}
-%%\input{fig/normal_simulation_power_summary.tex}
-%%\end{center}
-%
-%
-%
-%\begin{table}[]
-%\centering
-%\begin{tabular}{ll|ccccc}
-%\multicolumn{2}{c|}{Design}                                                                  & \multicolumn{5}{c}{$p$-value}                                                                                                                                                                                                                                                                                                                                           \\ \hline
-%Errors                        & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end{tabular} & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Differenced\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
-%\multirow{3}{*}{Gaussian}     & None                                                        & 0.058                      & 0.042                                                                                & 0.038                                                                                 & 0.062                                                                        & 0.057                                                                        \\
-%                              & Constant                                                    & 0.886                      & 0.545                                                                                 & 0.858                                                                                 & 0.891                                                                        & 0.892                                                                        \\
-%                              & Single stratum                                              & 0.159                      & 0.089                                                                                & 0.160                                                                                 & 0.162                                                                        & 0.170                                                                        \\ \hline
-%\multirow{3}{*}{Heavy-tailed} & None                                                        & 0.032                      & 0.040                                                                                & 0.045                                                                                 & 0.042                                                                        & 0.040                                                                        \\
-%                              & Constant                                                    & 0.355                      & 0.240                                                                                & 0.378                                                                                 & 0.400                                                                        & 0.393                                                                        \\
-%                              & Single stratum                                              & 0.066                      & 0.080                                                                                & 0.082                                                                                 & 0.076                                                                        & 0.080                                                                        \\ \hline
-%\end{tabular}
-%\caption{Empirical power at level $0.05$ for Gaussian simulated data with balanced treatment groups.}
-%\label{tab:normal_power}
-%\end{table}
-%
-%Our second set of simulations used the same design as the previous ones, but modified the sizes of the treatment groups.
-%Within each stratum, 4 individuals received one treatment and 12 received the other.
-%This mimics some real-world experiments, where the more expensive treatment is administered less frequently than the placebo or standard of care.
-%It is well-known that both parametric and nonparametric tests have higher than nominal level when there is heterogeneous variance, and this effect is exacerbated when group sizes are unequal (\cite{glass_consequences_1972}, \cite{zimmerman_two_2006}).
-%Here, the data had equal variances so we would expect power, not the test level, to be an issue.
-%(See the supplementary Gaussian simulations for simulations using data with heterogeneous variances.)
-%Table~\ref{tab:imbalanced_power} displays the value of these power curves and the size of the test at level $0.05$.
-%In this case, the permutation tests (except for the simple stratified permutation) had slightly higher power than ANCOVA, but the difference was not substantial.
-%
-%%\begin{center}
-%%\input{fig/imbalanced_simulation_power_summary.tex}
-%%\end{center}
-%
-%
-%\begin{table}[ht]
-%\centering
-%\begin{tabular}{ll|ccccc}
-%\multicolumn{2}{c|}{Design}                                                                 & \multicolumn{5}{c}{$p$-value}                                                                                                                                                                                                                                                                                                                                           \\ \hline
-%Errors                        & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end{tabular} & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Differenced\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
-%\multirow{3}{*}{Gaussian}     & None                                                        & 0.046                      & 0.031                                                                                & 0.028                                                                                 & 0.042                                                                        & 0.045                                                                        \\
-%                              & Constant                                                    & 0.840                      & 0.490                                                                                & 0.810                                                                                 & 0.870                                                                        & 0.860                                                                        \\
-%                              & Single stratum                                              & 0.120                      & 0.050                                                                                & 0.090                                                                                 & 0.100                                                                        & 0.120                                                                        \\ \hline
-%\multirow{3}{*}{Heavy-tailed} & None                                                        & 0.034                      & 0.054                                                                                & 0.055                                                                                 & 0.047                                                                        & 0.042                                                                        \\
-%                              & Constant                                                    & 0.230                      & 0.200                                                                                & 0.270                                                                                 & 0.260                                                                        & 0.270                                                                        \\
-%                              & Single stratum                                              & 0.070                      & 0.080                                                                                & 0.090                                                                                 & 0.090                                                                        & 0.080                                                                        \\ \hline
-%\end{tabular}
-%\caption{Empirical power at level $0.05$ for Gaussian simulated data with imbalanced treatment groups.} 
-%\label{tab:imbalanced_power}
-%\end{table}
-%
-%In our third set of simulations, we made the baseline measurements $Y_{ij0}$ discrete and skewed.
-%This type of data may occur in surveys where individuals are asked to rate their symptom severity on a discrete ordinal scale.
-%We generated the baseline measures using independent draws from a Poisson distribution with mean 4 and censored values at 10.
-%We conditioned on these observed baseline measures after generating them once.
-%Then, for each of 1000 trials, we randomly assigned treatment to half of the individuals in each stratum and generated errors taking on values $0.5$ and $-0.5$ with equal probability.
-%We constructed $Y_{ij1}$ using Equation~\ref{eqn:dgp} with a treatment effect of $\gamma = 0.5$.
-%To ensure that both baseline and outcome were integer scores, we let the $Y_{ij1}$ be unobservable and defined the observed outcome as
-%
-%\begin{displaymath}
-%   \tilde{Y}_{ij1} = \left\{
-%     \begin{array}{ll}
-%       1 & \text{if } {Y}_{ij1} < 1\\
-%       10 & \text{if } {Y}_{ij1} > 10 \\
-%       \lfloor {Y}_{ij1} \rfloor & \text{otherwise}
-%     \end{array}
-%   \right.
-%\end{displaymath}
-%
-%
-%The observed outcomes $\tilde{Y}_{ij1}$, the baseline measures $Y_{ij0}$, and the errors were discrete, violating normality assumptions.
-%
-%We examined the effect of stratum size in this set of simulations.
-%For each of the two treatment effect designs, we considered both equal and unequal stratum sizes.
-%The simulations with equal stratum sizes were generated as before, where each stratum contained $n_j = 16$ individuals.
-%The simulations with unequal stratum sizes were set up so the smallest stratum had only $n_1=8$ individuals, the next had $n_2= 16$, and the largest had $n_3=24$.
-%The design with a nonzero treatment effect in a single stratum and unequal stratum sizes was particularly unfavorable:
-%the nonzero effect only occurred in the smallest stratum.
-%
-%Figure~\ref{fig:skewed_sim_power} shows the estimated power curves in these four designs.
-%When the treatment effect was constant, sample sizes within each stratum didn't matter; 
-%the two power curve plots in the first row of Figure~\ref{fig:skewed_sim_power} look the same up to chance variation.
-%When the treatment effect only occurred in one stratum, there was a substantial loss in power.
-%It was nearly impossible to detect a difference in treatments when the affected stratum was too small.
-%In practice, one does not usually know a priori which individuals will be affected by treatment (otherwise, those not affected would be excluded from the study altogether).
-%This result suggests that when stratifying, one must be cautious not to stratify too finely, as it is impossible to measure an effect with an insufficient sample size.
-%
-%All of the tests appeared to be conservative and to have lower than nominal level.
-%As in the first set of simulations, the stratified permutation test using the raw outcomes had the lowest power of the five tests.
-%The stratified permutation test using the change scores also had lower power than the three linear model tests.
-%Presumably, this was because the differences $\tilde{Y}_{ij1} - Y_{ij0}$ were discrete and limited to a small number of values, so the test statistic could not vary greatly across permutations.
-%Table~\ref{tab:skewed_power} confirms this: power for the three linear model methods was high when the treatment was constant across strata, and power for all of the methods suffered when the effect was isolated in a single stratum.
-%
-%
-%\begin{figure}
-%\centering
-%\includegraphics[width = \textwidth]{fig/skewed_simulation_power.pdf}
-%\caption{Empirical power curves for the skewed, discrete simulated data}
-%\label{fig:skewed_sim_power}
-%\end{figure}
-%
-%%\begin{center}
-%%\input{fig/skewed_simulation_power_summary.tex}
-%%\end{center}
-%\begin{table}[]
-%\centering
-%\begin{tabular}{ll|ccccc}
-%\multicolumn{2}{c|}{Design}                                                               & \multicolumn{5}{c}{$p$-value}                                                                                                                                                                                                                                                                                                                                           \\ \hline
-%Group sizes                 & \begin{tabular}[c]{@{}l@{}}Treatment \\ Effect\end{tabular} & \multicolumn{1}{l}{ANCOVA} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Stratified\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Differenced\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}LM\\ Permutation\end{tabular}} & \multicolumn{1}{l}{\begin{tabular}[c]{@{}l@{}}Freedman-\\ Lane\end{tabular}} \\ \hline
-%\multirow{3}{*}{Balanced}   & None                                                        & 0.036                      & 0.025                                                                                & 0.021                                                                                 & 0.035                                                                        & 0.037                                                                        \\
-%                            & Constant                                                    & 0.974                      & 0.143                                                                                & 0.853                                                                                 & 0.972                                                                        & 0.977                                                                        \\
-%                            & Single stratum                                              & 0.422                      & 0.050                                                                                & 0.275                                                                                 & 0.429                                                                        & 0.424                                                                        \\ \hline
-%\multirow{3}{*}{Imbalanced} & None                                                        & 0.038                      & 0.024                                                                                & 0.019                                                                                 & 0.037                                                                        & 0.039                                                                        \\
-%                            & Constant                                                    & 0.971                      & 0.147                                                                                & 0.860                                                                                 & 0.970                                                                        & 0.972                                                                        \\
-%                            & Single stratum                                              & 0.190                      & 0.070                                                                                & 0.100                                                                                 & 0.190                                                                        & 0.190                                                                        \\ \hline
-%\end{tabular}
-%\caption{Empirical power at level $0.05$ for discrete, skewed simulated data} 
-%\label{tab:skewed_power}
-%\end{table}
-%It makes sense that in all of these simulations, the permutation test using the change scores as the response measure is more powerful than the permutation test using the raw outcomes.
-%The baseline and outcome were highly correlated, so the change score had lower variance than the outcome alone. 
-%In additional simulations, 
-%we modified the data-generating process given by Equation~\ref{eqn:dgp} so that the outcome and baseline had a correlation of $0.25$.
-%In this case, the result was reversed: 
-%the differenced test had low power while the test using the raw outcomes had a power curve closer to the linear model-based tests.
-%(See the supplementary Gaussian simulations for a more detailed treatment.)
-%This behavior has been studied before by \cite{frison_repeated_1992}, who recommended using the difference in outcome and baseline if their correlation is greater than $0.5$ and to use the outcome only if their correlation is less than $0.5$.
-%
+Many experiments use assign a different number of individuals to each treatment group.
+Our previous simulations assumed that the number in each treatment group was the same.
+We examined the effect of varying the proportion who received treatment in each stratum.
+The tests remain consistent no matter how many individuals are assigned to each treatment group, 
+but power may be affected.
+
+We repeated the simulations with continuous outcomes, Gaussian disturbances, and fixed $\gamma=0.2$ but varied the number of treated in each stratum to be $4$, $8$, or $12$.
+Each of the tests tended to have higher power when the total number of treated units was around half of the population (in this case, 24 out of 48).
+It is interesting to note that all tests had more power when 25\% of units were treated than when 75\% were treated; it seems that power is not a symmetric function.
+In the scenarios with a varying treatment effect, the  effect was largest in the third stratum and smallest in the first stratum.
+As expected, among experiments that fixed the total number of treated units, the experiment with more treatment units in the third stratum tended to have higher power.
+
+The differenced permutation test had substantially lower power than the rest,
+again because the correlation between baseline $X$ and outcome $Y$ was low.
+In this case, the unadjusted stratified test had comparable power to or higher than the linear model based tests.
+ANCOVA had slightly higher power than the linear model permutation tests for all experiments except for when the number of treated units was equal to number of controls and when the number of treated units was 30 or above.
+We refer the reader to the supplementary file for the details of these experiments.
+
+
+
+\subsection{Nonlinear model}
+
+The potential outcomes model we used before turned out to be a linear function of $X$ and $Z$, conditional on the latent variable $v$.
+For these simulations, we changed the outcome model to be nonlinear, violating an important ANCOVA assumption.
+Instead of an additive treatment effect, now the effect is multiplicative.
+We generated the latent variable and errors in the same way, but let 
+
+
+\begin{align*}
+X_{ij} &=  \frac{ e^{v_{ij}} + e^{v_{ij}/2}}{2} +\varepsilon_{ij} \\
+Y_{ij}(Z_{ij}) &= (1+\gamma)^{Z_{ij}} X_{ij}  + \delta_{ij} \\
+&= \gamma X_{ij}Z_{ij} + X_{ij} + \delta_{ij}.
+\end{align*}
+
+The treatment effect for individual $(i, j)$ is thus $\gamma X_{ij}$.
+The stratified, unadjusted permutation test failed here:
+the potential outcomes depend on the baseline covariate, so units are not exchangeable without controlling for the baseline.
+The ANCOVA and permutation linear model tests had identical power, while the differenced permutation test had slightly more power.
+The patterns were the same when the latent variables $v$ had the same and different distributions across strata;
+it made little difference because the treatment effect varied within strata, anyway.
+
 
 \section{Clinical data results}\label{sec:results}
 We compared the parametric ANCOVA, the stratified permutation test, and the two linear model-based permutation tests using a dataset from a clinical trial comparing the effectiveness of two treatments for gastroesophageal reflux disease (GERD).
@@ -676,23 +577,26 @@ At each site, patients were randomly assigned one of two treatments.
 Patients were observed for a week before receiving treatment and for a week after receiving treatment.
 On each of the fourteen days of observation, patients responded to a survey about their heartburn, regurgitation, and dyspepsia frequency and severity.
 These endpoints were measured on a discrete scale.
-There were several additional endpoints, such as daily regurgitation, daily ``hrdq'', and daily dyspepsia, calculated from the survey measures.
+There were several additional endpoints calculated from the survey measures: daily heartburn, daily regurgitation, daily ``hrdq'' (a composite score), and daily dyspepsia.
 Daily ``hrdq'' was the primary endpoint.
 To reduce day-to-day variation, we averaged the measures from each week to obtain two observations per patient, one pre-treatment and one post-treatment.
+These averages are not quite discrete ordinal values, but they are not continuous either: they can only take a finite set of values.
 
 We used site as the stratification variable, as this is the level at which treatment was randomized.
-We did not include country in the model, as a country-level effect should be captured in the site-level effects.
 The model used for the linear regression-based tests was defined as in Equation~\ref{eqn:ancova}.
 This model allowed the intercept $\alpha_j$ to vary across sites and used the pretreatment, baseline measurement as the control variable $X$.
 The outcome and baseline had a moderate correlation (for instance, the correlation ranged from $0.56$ for daily ``hrdq'' and $0.70$ for heartburn frequency).
 \cite{frison_repeated_1992} recommend using change scores only if the correlation is at least $0.5$.
-However, we choose to include the baseline as a covariate in the linear regression rather than using change scores as the dependent variables for illustration and to be consistent with the original analysis of the data.
+However, we choose to include the baseline as a covariate in the linear regression, rather than using change scores as the dependent variables, to illustrate the inclusion of covariates and to be consistent with the original analysis of the data.
 
-Figure~\ref{fig:clinical_distr} shows the distribution of each clinical endpoint for the two treatment groups.
-There is a clear difference in distributions for daily heartburn (``daily\_heart''), daily ``hrdq'' (``daily\_hrdq''), and heartburn frequency (``heart\_freq'').
-The difference is less clear for daily regurgitation (``daily\_regurg''), daily dyspepsia (``daily\_dysp''), regurgitation frequency (``regurg\_freq''), and dyspepsia frequency (``dysp\_freq'').
-The distribution of outcomes for each endpoint is extremely right skewed, calling the assumption of normally distributed error terms into question.
-\todo{discuss other assumptions}
+Table~\ref{tab:clinical_distr} shows the mean and standard deviation of each clinical endpoint for the two treatment groups.
+There is a large difference in means for daily heartburn (``daily\_heart''), daily ``hrdq'' (``daily\_hrdq''), heartburn frequency (``heart\_freq''), and regurgitation frequency (``regurg\_freq'').
+The difference is less clear for daily regurgitation (``daily\_regurg''), daily dyspepsia (``daily\_dysp''), and dyspepsia frequency (``dysp\_freq'').
+The distribution of outcomes for each endpoint is extremely right skewed, which may make it difficult to fit a linear model to the data.
+Residual plots indicate heteroskedastic errors, invalidating the assumption of constant error variance needed for parametric inference.
+The permutation test assumptions are guaranteed by the randomization that was conducted.
+We checked the additional exchangeability conditions for the Freedman-Lane test and found no evidence that they were violated. 
+These checks are included in the supplementary file.
 
 Table~\ref{tab:clinical_pvalues} shows the $p$-values for the four tests and the seven continuous study endpoints.
 Overall, the results confirm our expectations based on visual comparison in Figure~\ref{fig:clinical_distr}:
@@ -702,37 +606,44 @@ The $p$-values for the stratified, unadjusted permutation test have no consisten
 
 The three tests based on the linear model give qualitatively similar results here.
 The ANCOVA $p$-values tend to be smaller than the permutation linear model and residual permutation test $p$-values.
-This may be due to the skewed outcome distributions: the parametric test is more sensitive to large values than the permutation tests.
+This may be due to the skewed outcome distributions and heteroskedastic errors: the parametric test is more sensitive to large values than the permutation tests.
 Our conclusions for the heartburn frequency, daily heartburn, and daily ``hrdq'' endpoints differ between ANCOVA and the permutation tests at significance level $0.05$, but not at level $0.1$.
-None of the three tests based on linear models is significant at level $0.1$ for the other four endpoints;
-there is no endpoint which would be deemed significant using a permutation test but insignificant with ANCOVA.
+There is no endpoint which would be deemed significant using a permutation test but insignificant with ANCOVA.
 This suggests that the parametric test correctly discriminates between endpoints that are significantly different and endpoints that are not different between treatment A and treatment B.
+The correspondence between parametric and permutation test results gives some confidence that the results are stable and reliable.
 
 
-\begin{figure}
+\begin{table}\label{tab:clinical_distr}
 \centering
-\includegraphics[width = \textwidth]{fig/clinical_distr.pdf}
-\caption{Distribution of each endpoint for the two treatments A and B}
-\label{fig:clinical_distr}
-\end{figure}
+\begin{tabular}{r|cc|cc}
+  \hline
+ & Mean A & SD A & Mean B & SD B \\ 
+  \hline
+daily\_heart & 0.59 & 0.46 & 0.75 & 0.52 \\ 
+  daily\_regurg & 0.52 & 0.44 & 0.58 & 0.45 \\ 
+  daily\_dysp & 0.56 & 0.51 & 0.55 & 0.49 \\ 
+  daily\_hrdq & 1.11 & 0.84 & 1.33 & 0.86 \\ 
+  heart\_freq & 2.48 & 2.10 & 3.51 & 2.76 \\ 
+  regurg\_freq & 2.30 & 1.97 & 2.58 & 2.16 \\ 
+  dysp\_freq & 2.49 & 2.48 & 2.36 & 2.25 \\ 
+   \hline
+\end{tabular}
+\caption{Mean of each continuous outcome in groups A and B.} 
+\end{table}
 
-%
-%\begin{center}
-%\input{fig/results_pvalue_summary.tex}
-%\end{center}
 
 \begin{table}[]
 \centering
 \label{tab:clinical_pvalues}
 \begin{tabular}{l|LLLL}
 Endpoint      & ANCOVA & Stratified Permutation & LM Permutation & Freedman-Lane \\ \hline
-heart\_freq   & 0.035                      & 0.006                                                                                & 0.080                                                                        & 0.082                                                                        \\
-regurg\_freq  & 0.136                      & 0.118                                                                                & 0.280                                                                        & 0.220                                                                        \\
-dysp\_freq    & 0.565                      & 0.948                                                                                & 0.616                                                                        & 0.592                                                                        \\
-daily\_heart & 0.032                      & 0.004                                                                                & 0.056                                                                        & 0.068                                                                        \\
-daily\_regur  & 0.142                      & 0.174                                                                                & 0.286                                                                        & 0.246                                                                        \\
-daily\_hrdq   & 0.043                      & 0.012                                                                                & 0.088                                                                        & 0.098                                                                        \\
-daily\_dysp   & 0.582                      & 0.810                                                                                & 0.756                                                                        & 0.722                                                                        \\
+heart\_freq   & 0.035                      & 0.003                                                                                & 0.070                                                                        & 0.074                                                                       \\
+regurg\_freq  & 0.136                      & 0.157                                                                                & 0.231                                                                        & 0.221                                                                        \\
+dysp\_freq    & 0.565                      & 0.925                                                                               & 0.592                                                                        & 0.579                                                                        \\
+daily\_heart & 0.032                      & 0.010                                                                                & 0.062                                                                        & 0.069                                                                        \\
+daily\_regur  & 0.142                      & 0.195                                                                                & 0.250                                                                        & 0.243                                                                        \\
+daily\_hrdq   & 0.043                      & 0.033                                                                                & 0.086                                                                        & 0.088                                                                        \\
+daily\_dysp   & 0.582                      & 0.803                                                                                & 0.686                                                                        & 0.699                                                                        \\
 \hline
 \end{tabular}
 \caption{Comparison of p-values from four tests, for each continuous endpoint.} 
@@ -743,9 +654,19 @@ daily\_dysp   & 0.582                      & 0.810                              
 
 
 This paper adds to the literature comparing parametric and nonparametric tests.
+We simulated a variety of data-generating processes under the potential outcomes model, ranging from the ideal case when treatment effects are homogeneous, to cases when data are discrete, effects vary across strata, and treatment assignment is imbalanced within groups.
+The linear regression based tests had comparable power in all circumstances.
+They all suffered a loss of power when the linear model was a poor fit to the data.
+The stratified permutation test appears to perform best when the correlation between the outcome and covariates is low, while using change scores as the dependent variable in the stratified permutation test works well when the correlation is high.
+The linear model permutation tests are a middle ground between these two extremes: they allow one to incorporate covariates with any amount of correlation, assuming that the linear model has a reasonable in-sample fit.
+It is a matter of taste which test one chooses for their experiment: while the parametric test may be robust to violations of its assumptions, it seems reassuring that the permutation test can exactly match the randomization that was done without additional assumptions.
+Applying a linear model based permutation test as a secondary analysis can give insight into how strongly violations of the ANCOVA assumptions affect results
+and give confidence that inferences based on ANCOVA are reliable.
+
+
 On the one hand, some argue that violations of parametric test assumptions necessitate the use of permutation methods.
-\cite{ludbrook_why_1998} point out that medical trials rarely follow the population sampling model implicit in parametric methods.
-Many people recommend using permutation tests in place of the usual parametric tests for typical analyses, such as ANOVA and generalized linear models (\cite{still_approximate_1981, winkler_permutation_2014}).
+\cite{ludbrook_why_1998} point out that medical trials rarely follow the population sampling model that is implicit in parametric methods, while permutation tests condition on the sample at hand.
+Many people recommend using permutation tests in place of common parametric tests, such as ANOVA and generalized linear models (\cite{still_approximate_1981, winkler_permutation_2014}).
 They argue that there are a myriad of ways that the data may violate the necessary assumptions for the test, and so permutation tests are more robust.
 
 However, parametric and nonparametric tests seem to perform similarly when compared side-by-side in simulations, even when data violate the assumptions of the parametric method.
@@ -754,26 +675,18 @@ However, \cite{winter_five-point_2010} found that the two sample $t$ test and Ma
 \cite{vickers_parametric_2005} compared the parametric ANCOVA to the Mann-Whitney rank test in the context of randomized experiments, finding that except in extreme situations, ANCOVA was more powerful than the nonparametric test.
 Most similar to our question of study, \cite{anderson_empirical_1999} found little difference between several permutation tests for coefficients in a linear model alongside the parametric $t$ test.
 In these situations, the permutation test strengthens conclusions by giving evidence that the parametric test is robust to departures from its assumptions.
-
 Our results match those of \citet{vickers_parametric_2005} and \citet{anderson_empirical_1999}, where parametric ANCOVA and regression-based $t$ tests performed the same or better than the comparable nonparametric tests.
-We simulated a variety of data-generating processes, ranging from the ideal case when all assumptions are met, 
-to the case when data are non-normal, discrete, or skewed.
-In the supplementary simulation files, we also considered data with other possible issues such as heterogeneous treatment effects and unequal sample sizes.
-The linear regression-based tests, both the parametric ANCOVA and the permutation tests, suffered a loss of power when the ANCOVA assumptions were violated.
-However, the tests remained comparable to each other.
-It is a matter of taste which test one chooses for their experiment: while the parametric test may be robust to violations of its assumptions, it is somewhat reassuring that the permutation test can exactly match the randomization that was done while making no distributional assumptions.
-Applying a linear model based permutation test as a secondary analysis can give insight into how ANCOVA results depend on the method's assumptions
-(making it conservative, anti-conservative, or not systematically affecting the $p$-value in a particular direction),
-and give evidence that inferences based on ANCOVA are reliable.
 
-Permutation tests do not come entirely free of assumptions, though: 
-subjects must be exchangeable if we generate the permutation distribution assuming that all possible allocations of treatment which preserve the number of treated units are equally likely.
+
+In randomized experiments, permutation tests are always valid as long as they match the randomization scheme that was actually conducted.
+The exchangeability of treatments is guaranteed by construction.
+In observational studies, one must prove that subjects are exchangeable.
 \cite{romano_behavior_1990} warns against using permutation tests naively if items are not truly exchangeable. 
 For instance, he points to the case where observations have unequal variances.  
 This is a problem in practice as one cannot observe errors; it is a leap of faith to assert that they are homogeneous and therefore exchangeable.
 \cite{boik_fisherpitman_1987} illustrates this phenomenon using the traditional $F$ test and its permutation counterpart, 
 and demonstrates by simulation that the latter has larger than nominal level when the error variances are unequal.
-Randomized experiments mitigate this problem: by definition, treatment assignment is statistically independent of all other variables (possibly conditioning on strata).
+Randomized experiments mitigate this problem: by definition, treatment assignment is statistically independent of all other variables (possibly conditioning on strata) and in expectation over repeated randomizations, the two groups have equal variances.
 
 It is important to note that the permutation tests described here are exact only in the context of randomized experiments.
 Treatment is assigned at random and is therefore statistically independent of the covariates $X$ and the errors $\varepsilon$.
@@ -782,16 +695,10 @@ The statistical independence guaranteed by randomized experiments enables us to 
 When exchangeability doesn't hold, we cannot disentangle the effect of $Z$ from the effect of $X$.
 One must provide evidence that variables in observational studies are exchangeable in order to achieve an approximately exact test.
 The onus is on the researcher to make the case that the variable being permuted is uncorrelated with the other variables being held fixed.
-This can be done visually using scatterplots and residual plots (see e.g. \cite{freedman_nonstochastic_1983}) and from knowledge of how the data arose and were collected.
+This can be done visually using scatterplots, residual plots (see e.g. \cite{freedman_nonstochastic_1983}), hypothesis tests, and from knowledge of how the data arose and were collected.
 
-One must be mindful of which covariates to include as controls.
-Ideally, all covariates related to the outcome are known and observed.
-In that case, the coefficient for treatment in a fully saturated linear model (including all covariates and their interactions) is an asymptotically consistent estimate of the average treatment effect (\cite{lin_agnostic_2013}).
-It is rare that one knows \textit{all} relevant covariates in practice; failure to control for all relevant variables can introduce bias in some permutation tests.
- \cite{gail_tests_1988} propose a randomization test based on residuals from an exponential family model and find that omitting relevant covariates leads to tests with higher than nominal level.
- 
-The method of controlling for baseline covariates matters, too.
-The naive way is to consider change scores, subtracting baseline measures from the outcome and doing hypothesis testing using the change as the dependent variable.
+Our simulations demonstrate that the method of controlling for baseline covariates matters.
+The naive way to control for repeated measures is to use change scores, the difference between the outcome and baseline measures, as the dependent variable.
 Our simulations confirm the suggestion of \cite{frison_repeated_1992} to use change scores only when there is a strong correlation between baseline and outcome.
 Weak correlations between baseline and outcome occur often in practice, as was the case with our GERD dataset.
 When the correlation is weak, the test of change scores may be less powerful than ignoring the baseline altogether.
@@ -810,9 +717,9 @@ All files are also available at \url{https://github.com/kellieotto/ancova-permut
 
 \begin{description}
 
-\item[Gaussian data simulations:] Simulations using Gaussian data in Section~\ref{sec:simulations}, including code and results. (PDF)
-\item[Imbalanced design simulations:] Simulations using data with different stratum sizes in Section~\ref{sec:simulations}, including code and results. (PDF)
-\item[Skewed data simulations:] Simulations using discrete, skewed data in Section~\ref{sec:simulations}, including code and results. (PDF)
+\item[Continuous outcomes simulations:] Simulations using continuous outcomes in Section~\ref{sec:simulations}, including code and results. (PDF)
+\item[Discrete outcomes simulations:] Simulations using discrete outcomes in Section~\ref{sec:simulations}, including code and results. (PDF)
+\item[Imbalanced treatment simulations:] Simulations using continuous outcomes with varying proportions receiving treatment in Section~\ref{sec:simulations}, including code and results. (PDF)
 \item[Clinical trial data:] Dataset used in Section~\ref{sec:results} to compare methods. (csv)
 \item[README:] Data descriptor file. (txt)
 \item[Results:] Detailed explanation, code, and results of comparing methods using the clinical trial dataset in Section~\ref{sec:results}. (PDF)
