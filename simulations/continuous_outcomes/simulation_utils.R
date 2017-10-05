@@ -127,7 +127,7 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   # Input:
   # gamma = multiplier for the magnitude of the treatment effect
   # effect = "same effect" or "heterogeneous"
-  # errors = "normal" or "heavy"
+  # errors = "normal", "t", "lognormal", "exponential", or "x-correlated"
   # n = number of individuals at each stratum
   # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), stratumID (stratum), stratum_effect (beta coefficient per individual), and epsilon (errors)
   
@@ -159,6 +159,11 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   } else if (errors == "exponential"){
     epsilon <- rexp(N) - 1
     delta <- rexp(N) - 1
+  } else if (errors == "x-correlated"){
+    epsilon <- rnorm(N)
+    Y0 <- gen_x(gamma, v, epsilon)
+    delta <- rnorm(N)
+    delta[abs(Y0) > 1] <- rnorm(N, sd = 2)
   } else {
     stop("invalid errors parameter")
   }

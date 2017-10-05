@@ -58,7 +58,7 @@ or exponentially distributed, with scale parameter $1$ and shifted to have mean 
 The observed $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$ were independent across $i$ and $j$.
 
 The baseline value for individual $i,j$ was 
-$$ X_{ij} = \frac{\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \varepsilon_{ij}$$.
+$$ X_{ij} = \frac{-\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \varepsilon_{ij}$$.
 
 Then we generated potential outcomes as
 
@@ -91,12 +91,12 @@ We compare the empirical power of five tests to detect this treatment effect:
 # Data-generation, tests, and plotting functions
 
 ```{r generate_sample}
-gen_y1 <- function(gamma, v, error, Z){
+gen_y <- function(gamma, v, error, Z){
   y1 <- 0.5*((2*Z-1)*gamma*exp(v) + exp(v/2)) + error
   return(y1)
 }
 
-gen_y0 <- function(gamma, v, error){
+gen_x <- function(gamma, v, error){
   y0 <- 0.5*(-1*gamma*exp(v) + exp(v/2)) + error
   return(y0)
 }
@@ -105,13 +105,13 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   # Input:
   # gamma = multiplier for the magnitude of the treatment effect
   # effect = "same effect" or "heterogeneous"
-  # errors = "normal" or "heavy"
+  # errors = "normal", "t", "lognormal", "exponential", or "x-correlated"
   # n = number of individuals at each stratum
   # Returns: a dataframe containing columns named Y1 (response), Y0 (baseline), Z (treatment), gamma_vec (treatment effect per individual), stratumID (stratum), stratum_effect (beta coefficient per individual), and epsilon (errors)
   
   stratumID <- rep(1:3, times = n)
   N <- sum(n)
-
+  
   # What is the treatment effect?
   if(effect == "same effect"){
     v <- runif(N, min=-4, max=4)
@@ -137,14 +137,19 @@ generate_simulated_data <- function(gamma, effect, errors, n = c(16, 16, 16)){
   } else if (errors == "exponential"){
     epsilon <- rexp(N) - 1
     delta <- rexp(N) - 1
+  } else if (errors == "x-correlated"){
+    epsilon <- rnorm(N)
+    Y0 <- gen_x(gamma, v, epsilon)
+    delta <- rnorm(N)
+    delta[abs(Y0) > 1] <- rnorm(N, sd = 2)
   } else {
     stop("invalid errors parameter")
   }
   
   # Generate covariates
   Z <- rep(0:1, length.out = N)
-  Y0 <- gen_y0(gamma, v, epsilon)
-  Y1 <- gen_y1(gamma, v, delta, Z)
+  Y0 <- gen_x(gamma, v, epsilon)
+  Y1 <- gen_y(gamma, v, delta, Z)
   return(data.frame(Y1, Y0, Z, v, stratumID, epsilon, delta))
 }
 
@@ -293,23 +298,22 @@ it is beneficial for power to control for the baseline in the linear model, but 
 We varied the distributions of the errors $\varepsilon$ and $\delta$ and examined the power of the five tests.
 Recall that these are not errors in the linear model framework, but more like disturbances on the potential outcomes and baseline measures for each individual.
 These disturbances affect the distributions of $X$ and $Y$, which may impact the power of the parametric ANCOVA, and affect the variances of $X$ and $Y$, which may make one method of controlling for the baseline more effective than another.
-We fixed $\gamma=0.2$ and let the errors have a standard normal distribution, a $t$ distribution with 2 degrees of freedom, a standard log normal distribution, or an exponential distribution with parameter $1$, shifted to have mean zero.
+We fixed $\gamma=0.2$ and let the errors have a standard normal distribution, a normal distribution with variance depending on the magnitude of $X$ (either standard deviation of 1 if $\lvert X \rvert \leq 1$ or standard deviation of 2 otherwise), a $t$ distribution with 2 degrees of freedom, a standard log normal distribution, or an exponential distribution with parameter $1$, shifted to have mean zero.
 
 Table 1 shows the empirical power (rejection rate among 10,000 simulations) for each of these error distributions and tests, where the $v_{ij}$ came from a single distribution across strata.
 In all cases, the correlation between baseline and outcome was lower than 0.05 in magnitude.
 Thus, the stratified permutation test, which omits the baseline measurement, had the highest power for all error distributions.
 All three linear model based tests had roughly the same rejection rate.
 The differenced permutation test had substantially less power than the other methods, due to the low correlation between baseline and outcome.
-Power was highest for normally distributed errors and was lowest for $t$ distributed errors.
+Power was highest for homoskedastic normally distributed errors and was lowest when errors were heteroskedastic.
 
 Table 2 shows the same results, but where the distribution of $v_{ij}$ varied across strata.
 In this case, the three linear model based tests had the highest power for each error distribution.
 While the correlation between baseline and outcome was still nearly zero, controlling for it in the linear model tended to increase precision.
 The stratified permutation test lost power for this reason.
 The differenced permutation test continued to have low power.
-Interestingly, when the errors were $t$ or log normally distributed, the power of each test did not change much whether the treatment effects were constant or heterogeneous across strata.
-However, power was lower for normally distributed errors when treatment effects varied across strata.
-In this scenario, the linear model does not fully describe the relationship between baseline and outcome: 
+Interestingly, the power of each of the tests was somewhat higher than when the treatment effects were homogeneous across strata.
+This is somewhat surprising as the linear model does not fully describe the relationship between baseline and outcome: 
 interaction terms between baseline and stratum ID are needed in the model to capture this variation across strata.
 
 
@@ -338,34 +342,41 @@ load("continuous_outcomes/exponential_homogeneous.Rda")
 ```
 ```{r exponential_heterogeneous}
 load("continuous_outcomes/exponential_heterogeneous.Rda")
+```
+```{r corr_homogeneous}
+load("continuous_outcomes/corr_errors_homogeneous.Rda")
+```
+```{r corr_heterogeneous}
+load("continuous_outcomes/corr_errors_heterogeneous.Rda")
 
 ```
-
 ```{r power_summary, results = "asis"}
 powers <- list(gaussian_homogeneous,
+               corr_errors_homogeneous,
                t_homogeneous,
                lognormal_homogeneous,
                exponential_homogeneous,
                gaussian_heterogeneous,
+               corr_errors_heterogeneous,
                t_heterogeneous,
                lognormal_heterogeneous,
                exponential_heterogeneous)
 summary05 <- t(sapply(powers, function(x) x[5,]))
-summary05 <- data.frame(rep(c("Normal", "t(2)", "Log Normal", "Exponential"), 2), summary05)
-colnames(summary05) <-  c("Errors", "ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane") 
+summary05 <- data.frame(rep(c("Normal", "Normal, heter.", "t(2)", "Log Normal", "Exponential"), 2), summary05)
+colnames(summary05) <-  c("Errors", "ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")   
 ```
 
 
 
 ```{r power_summary_const_tab, results = "asis"}
-summarytab_constant <- xtable(summary05[1:4,], digits = 3,
+summarytab_constant <- xtable(summary05[1:5,], digits = 3,
        caption = "Empirical power at level $0.05$ for simulated data with constant additive treatment effects",
-       label = "tab:power_grid1") 
+       label = "tab:power_grid1")  
 print(summarytab_constant, include.rownames=FALSE) 
 ```
 
 ```{r power_summary_het_tab, results = "asis"}
-summarytab_het <- xtable(summary05[5:8, ], digits = 3,
+summarytab_het <- xtable(summary05[6:10, ], digits = 3,
        caption = "Empirical power at level $0.05$ for simulated data with heterogeneous treatment effects",
        label = "tab:power_grid2") 
 print(summarytab_het, include.rownames=FALSE) 
@@ -398,3 +409,5 @@ p3
 ggsave("../ms/fig/continuous_outcomes_simulation_power.pdf", p3, device="pdf", width=8)
 
 ```
+
+
