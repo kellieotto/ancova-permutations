@@ -333,7 +333,7 @@ The test has two important assumptions pertaining specifically to the linear reg
 \begin{itemize}
 \item \textbf{Linear model:} the linear model that describes $Y$ using $X$ and the approximation error $\varepsilon$ holds
 \item \textbf{Linear regression fit:} the linear regression residuals $\hat{\varepsilon}$ are a good approximation to the true errors $\varepsilon$ 
-\item \textbf{Conditioning space:} the $\varepsilon$ are exchangeable against $X$ within strata
+\item \textbf{Exchangeable errors:} the $\varepsilon$ are exchangeable against $X$ within strata; any configuration of the $\varepsilon$ amongst the units has the same probability
 \item \textbf{No treatment effect under the null:} the $\varepsilon$ do not depend on $Z$
 \end{itemize}
 
@@ -453,18 +453,20 @@ Four of the five tests had the correct level of 5\%, while the stratified permut
 Both the stratified and differenced permutation tests had lower power than the linear model tests as the effect size increased.
 The correlation between baseline $X$ and outcome $Y$ was low but nontrivial (between $0.04$ and $0.44$), so this result makes some sense:
 it is beneficial for power to control for the baseline in the linear model, but the correlation is too low to make the differencing method useful.
+Perhaps surprisingly, the power of the linear model tests was higher when effects were heterogeneous than when they had the same distribution across strata.
 
 Finally, we varied the distributions of the errors $\varepsilon$ and $\delta$ and examined the power of the five tests.
 Recall that these are not errors in the linear model framework, but rather disturbances on the potential outcomes and baseline measures for each individual.
 These disturbances affect the distributions of $X$ and $Y$, which may impact the power of the parametric ANCOVA and may make one method of controlling for the baseline more effective than another.
-We fixed $\gamma=0.2$ and varied the distributions of $\varepsilon$ and $\delta$.
+We fixed $\gamma=0.2$ and let the errors have a standard normal distribution, a normal distribution with variance depending on the magnitude of $X$ (either standard deviation of 1 if $\lvert X \rvert \leq 1$ or standard deviation of 2 otherwise), a $t$ distribution with 2 degrees of freedom, a standard log normal distribution, or an exponential distribution with parameter $1$, shifted to have mean zero.
 
 The top panel in Table~\ref{tab:power_grid1} shows the empirical power for each of these error distributions and tests, where the $v_{ij}$ came from a single distribution across strata.
 In all cases, the correlation between baseline and outcome was lower than 0.05 in magnitude.
 Thus, the stratified permutation test, which omits the baseline measurement, had the highest power for all error distributions.
 All three linear model based tests had roughly the same rejection rate.
 The differenced permutation test had substantially less power than the other methods, due to the low correlation between baseline and outcome.
-Power was highest for normally distributed errors and was lowest for $t$ distributed errors.
+Power was highest for the homoskedastic normally distributed errors and was lowest for the heteroskedastic normally distributed errors.
+The scenario with correlated errors violates both the ANCOVA assumption of IID errors and the Freedman-Lane test assumption that errors are exchangeable against $X$.
 
 The bottom panel of Table~\ref{tab:power_grid1} shows the results when the distribution of $v_{ij}$ varied across strata.
 In this case, the three linear model based tests had the highest power for each error distribution.
@@ -484,15 +486,17 @@ interaction terms between baseline and stratum ID are needed in the model to cap
 Treatment Effect & Errors & ANCOVA & Stratified Permutation & Differenced Permutation & LM Permutation & Freedman-Lane \\ 
   \hline
 \multirow{4}{*}{Constant} & Normal & 0.835 & 0.874 & 0.596 & 0.842 & 0.841 \\ 
- & t(2) & 0.286 & 0.316 & 0.146 & 0.292 & 0.291 \\ 
- & Log Normal & 0.450 & 0.472 & 0.178 & 0.463 & 0.465 \\ 
- & Exponential & 0.540 & 0.588 & 0.468 & 0.552 & 0.552 \\ 
+ & Normal, heter. & 0.503 & 0.541 & 0.421 & 0.509 & 0.511 \\  
+ & t(2) & 0.440 & 0.481 & 0.226 & 0.448 & 0.450 \\ 
+ & Log Normal & 0.687 & 0.709 & 0.277 & 0.696 & 0.698 \\ 
+ & Exponential & 0.780 & 0.820 & 0.712 & 0.793 & 0.791 \\ 
    \hline
    \hline
-\multirow{4}{*}{Heterogeneous} & Normal & 0.658 & 0.548 & 0.317 & 0.669 & 0.669 \\ 
-  & t(2) & 0.359 & 0.315 & 0.139 & 0.365 & 0.362 \\ 
-  & Log Normal & 0.487 & 0.361 & 0.155 & 0.507 & 0.509 \\ 
-  & Exponential & 0.631 & 0.543 & 0.407 & 0.636 & 0.633 \\ 
+\multirow{4}{*}{Heterogeneous} & Normal & 0.877 & 0.844 & 0.554 & 0.887 & 0.891 \\ 
+  & Normal, heter. & 0.633 & 0.631 & 0.520 & 0.644 & 0.643 \\ 
+  & t(2) & 0.543 & 0.512 & 0.215 & 0.550 & 0.551 \\ 
+  & Log Normal & 0.711 & 0.608 & 0.252 & 0.730 & 0.731 \\ 
+  & Exponential & 0.814 & 0.786 & 0.651 & 0.820 & 0.816 \\ 
    \hline
 \end{tabular}
 \end{adjustbox}
@@ -654,7 +658,7 @@ daily\_dysp   & 0.582                      & 0.803                              
 
 
 This paper adds to the literature comparing parametric and nonparametric tests.
-We simulated a variety of data-generating processes under the potential outcomes model, ranging from the ideal case when treatment effects are homogeneous, to cases when data are discrete, effects vary across strata, and treatment assignment is imbalanced within groups.
+We simulated a variety of data-generating processes under the potential outcomes model, ranging from the ideal case when treatment effects are homogeneous for all individuals, to cases when errors are heavy-tailed or heteroskedastic, data are discrete, effects vary across strata, and treatment assignment is imbalanced within groups.
 The linear regression based tests had comparable power in all circumstances.
 They all suffered a loss of power when the linear model was a poor fit to the data.
 The stratified permutation test appears to perform best when the correlation between the outcome and covariates is low, while using change scores as the dependent variable in the stratified permutation test works well when the correlation is high.
@@ -720,6 +724,7 @@ All files are also available at \url{https://github.com/kellieotto/ancova-permut
 \item[Continuous outcomes simulations:] Simulations using continuous outcomes in Section~\ref{sec:simulations}, including code and results. (PDF)
 \item[Discrete outcomes simulations:] Simulations using discrete outcomes in Section~\ref{sec:simulations}, including code and results. (PDF)
 \item[Imbalanced treatment simulations:] Simulations using continuous outcomes with varying proportions receiving treatment in Section~\ref{sec:simulations}, including code and results. (PDF)
+\item[Nonlinear model simulations:] Simulations using a nonlinear model of potential outcomes in Section~\ref{sec:simulations}, including code and results. (PDF)
 \item[Clinical trial data:] Dataset used in Section~\ref{sec:results} to compare methods. (csv)
 \item[README:] Data descriptor file. (txt)
 \item[Results:] Detailed explanation, code, and results of comparing methods using the clinical trial dataset in Section~\ref{sec:results}. (PDF)
