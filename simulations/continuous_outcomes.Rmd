@@ -255,6 +255,31 @@ plot_power_gamma <- function(powermat_list, gamma_vec, alpha, title){
   ) 
 }
 
+
+plot_power_ratio_gamma <- function(powermat_list, gamma_vec, alpha, title){
+  gamma_power_alpha <- t(sapply(powermat_list, function(x) x[floor(alpha*nrow(x)),]))
+  colnames(gamma_power_alpha) <- c("ANCOVA", "Stratified Permutation", "Differenced Permutation", "LM Permutation", "Freedman-Lane")
+  gamma_power_alpha <- apply(gamma_power_alpha, 2, function(x) x/gamma_power_alpha[,"ANCOVA"])
+  melt(gamma_power_alpha, value.name="Power") %>%
+  mutate("Method" = Var2) %>%
+  mutate("Effect" = rep(gamma_vec, 5)) %>% 
+  filter(Method != "Differenced Permutation") %>%
+  filter(Method != "ANCOVA") %>%
+  ggplot(aes(x = Effect, y = Power)) +
+  geom_line(aes(color = Method))+
+  xlab("Effect size") +
+  ylab("Relative Power") +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 16),
+    title = element_text(size = 16),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 14),
+    strip.text.x = element_text(size = 12)
+  ) 
+}
 ```
 
 # Gaussian error terms, constant additive treatment effect
@@ -265,6 +290,7 @@ load("continuous_outcomes/vary_gamma_results.Rda")
 gamma_vec <- seq(0, 0.2, by=0.05)
 gamma_power <- lapply(gamma_res, function(x) apply(x, 2, compute_power))
 plot_power_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") 
+plot_power_ratio_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect")
 ```
 
 First, we let the $v_{ij}$ have the same distribution across strata and generated normally distributed errors.
@@ -283,6 +309,9 @@ load("continuous_outcomes/vary_gamma_het_results.Rda")
 gamma_vec <- seq(0, 0.2, by=0.05)
 gamma_power_het <- lapply(gamma_res_het, function(x) apply(x, 2, compute_power))
 plot_power_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") 
+
+plot_power_ratio_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect")
+
 ```
 Next, we varied the distribution of $v_{ij}$ across strata and generated normally distributed errors.
 Once again, we varied $\gamma$ from $0$ to $0.2$ in steps of $0.05$.
@@ -384,15 +413,15 @@ print(summarytab_het, include.rownames=FALSE)
 
 
 ```{r plot_for_ms, include=FALSE}
-p1 <- plot_power_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") + 
-  ylim(0, 0.9) +
+p1 <- plot_power_ratio_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") + 
+  ylim(0, 1.2) +
   theme(legend.position="bottom") + 
-  guides(color=guide_legend(nrow=2,byrow=TRUE)) +
+  guides(color=guide_legend(nrow=1,byrow=TRUE)) +
   report_theme +
   ggtitle("Constant Treatment \n Effect")
  
-p2 <- plot_power_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") +
-    ylim(0, 0.9) +
+p2 <- plot_power_ratio_gamma(gamma_power_het, tr_effect_het, 0.05, "Power at level 5%, Heterogeneous Treatment Effect") +
+  ylim(0, 1.2) +
     report_theme +
     ggtitle("Heterogeneous Treatment \n Effect")
 
