@@ -1,0 +1,2 @@
+load("/Users/Kellie/Documents/ancova-permutations-submission/ancova-permutations/simulations/new_simulations/vary_gamma_results.Rda")
+load("/Users/Kellie/Documents/ancova-permutations-submission/ancova-permutations/simulations/new_simulations/exponential_heterogeneous.Rda")
