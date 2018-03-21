@@ -266,7 +266,7 @@ plot_power_ratio_gamma <- function(powermat_list, gamma_vec, alpha, title){
   filter(Method != "Differenced Permutation") %>%
   filter(Method != "ANCOVA") %>%
   ggplot(aes(x = Effect, y = Power)) +
-  geom_line(aes(color = Method))+
+  geom_line(aes(linetype = Method))+
   xlab("Effect size") +
   ylab("Relative Power") +
   theme_bw() +
@@ -416,7 +416,7 @@ print(summarytab_het, include.rownames=FALSE)
 p1 <- plot_power_ratio_gamma(gamma_power, tr_effect, 0.05, "Power at level 5%, Constant Treatment Effect") + 
   ylim(0, 1.2) +
   theme(legend.position="bottom") + 
-  guides(color=guide_legend(nrow=1,byrow=TRUE)) +
+  guides(linetype=guide_legend(nrow=1,byrow=TRUE)) +
   report_theme +
   ggtitle("Constant Treatment \n Effect")
  

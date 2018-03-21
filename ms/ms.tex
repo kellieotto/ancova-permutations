@@ -81,7 +81,7 @@ Given the considerable costs and scientific importance of clinical trials, an ad
 \end{abstract}
 
 \noindent%
-{\it Keywords:}  Nonparametric methods, linear model, analysis of covariance, analysis of designed experiments
+{\it Keywords:}  Nonparametric methods, linear model, analysis of covariance, analysis of designed experiments, hypothesis testing
 \vfill
 
 \newpage
@@ -95,7 +95,7 @@ One can conduct hypothesis tests and construct confidence intervals for the esti
 by exploiting the fact that the difference in average outcomes between the two treatment groups is asymptotically normal with a variance that can be estimated from the data.
 
 The goal of a randomized experiment is to draw causal inferences about the efficacy of a treatment.
-Thus, it makes sense to analyze experiments in the context of potential outcomes, where every individual has a counterfactual outcome for each of the treatments (\cite{holland_1986_statistics})
+Thus, it makes sense to analyze experiments in the context of potential outcomes, where every individual has a counterfactual outcome for each of the treatments (\cite{holland_1986_statistics}).
 Experiments are an attempt to estimate the counterfactual outcomes by randomly assigning treatments.
 Random assignment of treatment ensures that pretreatment covariates are balanced between treatment groups on average, across all possible randomizations, making treatment groups comparable to each other.
 
@@ -130,8 +130,6 @@ linear models can have substantial bias in small samples (\cite{freedman_regress
 outcomes are often discrete or ordinal, 
 the treatment may have a differential effect across subgroups of individuals, 
 and when the distributions of outcomes may differ across strata.
-%Furthermore, the hypothesis test implicitly assumes that the data were sampled at random from some underlying population, when in fact,
-%medical experimenters rarely recruit patients this way (\cite{ludbrook_why_1998}).
 
 Permutation testing is an alternate approach (\cite{fisher_design_1935, pitman_significance_1937,pitman_significance_1938}).
 Deliberate randomization induces a distribution for any test statistic under the null hypothesis that treatment has no effect on the outcome:
@@ -225,7 +223,7 @@ This procedure also yields an estimate $\hat{\sigma}_{\hat{\gamma}}^2$ of the va
 Under the null hypothesis, the test statistic 
 $$ T = \frac{\hat{\gamma}}{\sqrt{ \hat{\sigma}_{\hat{\gamma}}^2}}$$
 follows the Student $t$ distribution with degrees of freedom equal to the number of observations minus the number of parameters estimated (in this case, $N - J - 2$).
-The $p$-value for this hypothesis test is the probability, assuming the null hypothesis of zero coefficient is true, that a value drawn from the $t$ distribution is larger in magnitude than the observed $T$.
+The $p$-value for this two-sided hypothesis test is the probability, assuming the null hypothesis of zero coefficient is true, that a value drawn from the $t$ distribution is larger in magnitude than the observed $T$.
 This test is equivalent to the $F$ test.
 When the model assumptions are true, it is uniformly most powerful.
 
@@ -238,20 +236,22 @@ In small samples, the bias may still be substantial.
 This is equivalent to estimating a fully saturated linear model with interaction terms for treatment and stratum membership.
 The linear ANCOVA model does not account for variation in the treatment effect across strata in this way;
 if the difference in potential outcomes is heterogeneous across strata, then the coefficient $\gamma$ may be attenuated towards 0.
-Thus, it is unclear for any particular dataset whether or not the ANCOVA model will give valid results.
+Thus, it is unclear for any particular dataset whether or not the ANCOVA model will give valid estimates and inference for a treatment effect in finite samples.
 
 
 \subsection{Stratified permutation test}\label{subsec:strat_perm_test}
-All permutation tests essentially have two requirements: a conditioning space, the orbit of a finite group of transformations of the data in which all configurations of the data are equiprobable under the null hypothesis, and a set of sufficient statistics for the data which describe the data under these transformations.(\cite{pesarin_permutation_2010}).
-%We describe these two elements in the context of a stratified randomized experiment.
+All permutation tests essentially have two requirements: the conditioning space, defined as the orbit of a finite group of transformations of the data in which all configurations of the data are equiprobable under the null hypothesis, and a set of sufficient statistics for the data which describe the data under these transformations (\cite{pesarin_permutation_2010}).
+Exact permutation inference is derived from computing statistics for all (or a random subset) of the conditioning space.
 In experiments, the only random quantities are those involving $Z$, the vector of treatment assignments.
+The conditioning space is made up of all possible values of $Z$ under the randomization done in the experiment.
 In particular, the potential outcomes and covariates are fixed in the finite population under study, while the observed responses change with $Z$.
-The exact permutation inference is derived from the conditioning space which includes all possible values of $Z$.
 
 Suppose we wish to test the null hypothesis that individual by individual, treatment has no effect.
 This is referred to as the ``sharp'' null hypothesis:
 
-$$H_0: Y_{ij}(1) = Y_{ij}(0), \forall i = 1, \dots, n_j, j = 1,\dots, J.$$
+\begin{equation}\label{eqn:sharp_null}
+H_0: Y_{ij}(1) = Y_{ij}(0), \forall i = 1, \dots, n_j, j = 1,\dots, J.
+\end{equation}
 
 Under the null hypothesis, which treatment an individual received amounts to an arbitrary label.
 Once we observe one response under a particular treatment, we can impute the other potential outcome; namely, it would have been the same  (\cite{rosenbaum_covariance_2002}).
@@ -266,8 +266,8 @@ Instead, we typically use Monte Carlo simulations to randomly assign treatment a
 
 To summarize, the assumptions for the stratified permutation test are the following.
 \begin{itemize}
-\item \textbf{Complete randomization:} the $\prod_{j=1}^J {n_j \choose n_j^T}$ assignments of treatment which assign $n_j^T$ out of $n_j$ individuals to treatment 1 in stratum $j$, for each stratum $j=1,\dots,J$, has equal probability
-\item \textbf{No treatment effect under the null:} both potential outcomes are identical and equal to the observed outcome for each individual $(i, j)$
+\item \textbf{Complete randomization:} The $\prod_{j=1}^J {n_j \choose n_j^T}$ assignments of treatment which assign $n_j^T$ out of $n_j$ individuals to treatment 1 in stratum $j$, for each stratum $j=1,\dots,J$, has equal probability.
+\item \textbf{No treatment effect under the null:} Both potential outcomes are identical and equal to the observed outcome for each individual $(i, j)$.
 \end{itemize}
 
 
@@ -296,8 +296,8 @@ The tests in Section~\ref{subsec:strat_perm_test} only use information on the tr
 However, experimenters typically record additional covariates that may be predictive of the outcome.
 Incorporating these covariates can reduce variation in the statistic due to factors unrelated to treatment, thereby increasing power to detect a treatment effect.
 The permutation tests in this section use the linear model in Equation~\ref{eqn:ancova} to control for covariates, but make different assumptions about the data.
-In a randomized experiment, the treatment assignment is independent of covariates, errors, and potential outcomes,
-making several variables exchangeable.
+In a randomized experiment, the treatment assignment is independent of covariates, errors, and potential outcomes.
+This independence makes each of these exchangeable against the treatment.
 We show two permutation tests developed in this framework.
 They test the same ``sharp'' null hypothesis of no treatment effect.
 
@@ -323,10 +323,10 @@ We can carry out an approximate permutation test by permuting the estimated $\ha
 The test is only approximate because we must estimate $\alpha$ and $\beta$ to construct $\hat{\varepsilon}$.
 The test has two important assumptions pertaining specifically to the linear regression, on top of the two necessary pieces of a permutation test:
 \begin{itemize}
-\item \textbf{Linear model:} the linear model that describes $Y$ using $X$ and the approximation error $\varepsilon$ holds
-\item \textbf{Linear regression fit:} the linear regression residuals $\hat{\varepsilon}$ are a good approximation to the true errors $\varepsilon$ 
-\item \textbf{Exchangeable errors:} the $\varepsilon$ are exchangeable against $X$ within strata; any configuration of the $\varepsilon$ amongst the units has the same probability
-\item \textbf{No treatment effect under the null:} the $\varepsilon$ do not depend on $Z$
+\item \textbf{Linear model:} The linear model that describes $Y$ using $X$ and the approximation error $\varepsilon$ holds.
+\item \textbf{Linear regression fit:} The linear regression residuals $\hat{\varepsilon}$ are a good approximation to the true errors $\varepsilon$.
+\item \textbf{Exchangeable errors:} The $\varepsilon$ are exchangeable against $X$ within strata; any configuration of the $\varepsilon$ amongst the units has the same probability.
+\item \textbf{No treatment effect under the null:} The $\varepsilon$ do not depend on $Z$.
 \end{itemize}
 
 The $\hat{\varepsilon}$ may not even be approximately exchangeable within strata if the regression does not describe the relation between $Y$ and $X$ well.
@@ -363,7 +363,7 @@ Therefore, throughout the rest of the paper we focus on the two linear regressio
 \section{Simulations}\label{sec:simulations}
 
 We simulated data from a randomized experiment using several different data-generating processes.
-The variables included stratification, two randomly assigned treatments, a baseline measure before treatment, and the same variable measured after treatment.
+The variables included three strata, two levels of a randomly assigned treatment, a baseline measure before treatment, and the same variable measured after treatment.
 We tested for a treatment effect and compared the empirical power of the tests over repeated random treatment assignments.
 We compared the following five tests:
 the $t$ test from the parametric ANCOVA,
@@ -371,6 +371,9 @@ a stratified permutation test using the difference in mean outcomes as the stati
  (called ``stratified permutation'' in what follows),
 a stratified permutation test based on the $t$ statistic from the linear regression of outcome on control variables (called ``LM permutation'' in what follows),
 and the Freedman-Lane permutation test.
+The goal was to explore the performance of these methods under different violations of the usual linear model assumptions.
+On the one hand, permutation tests assess the sharp null hypothesis, a stronger null hypothesis that implies the null hypothesis of parametric ANCOVA.
+On the other hand, permutation tests make fewer assumptions about the data-generating process and may be more robust to violations of the linear model.
 The simulation code is included in four supplementary files.
 The supplementary files additionally consider a stratified permutation test using the mean change scores, defined as the difference between the outcome and baseline measure;
 we omit the results here.
@@ -379,11 +382,15 @@ we omit the results here.
 \subsection{Continuous outcomes}
 
 In the first set of simulations, we generated continuous potential outcomes based on a latent variable and disturbance terms, both of which we manipulated.
+Observations were indexed by individual $i = 1, \dots, n_j$ in stratum $j=1, 2, 3$.
+We included $n_j=16$ individuals per stratum and treatment assignment was balanced, i.e. 8 people received each treatment in each stratum.
+These small stratum sizes were chosen to reflect the size of many real-world clinical trials.
+
 We used two scenarios.
 In the first scenario, the treatment effect was homogeneous across strata.
 We drew a latent random variate $v_{ij}$ from the uniform distribution on $[-4, 4]$.
 In the second scenario, the treatment effect was heterogeneous across strata, and we drew the latent random variable according to
-\begin{displaymath}
+\begin{equation}
    v_{ij} \sim \left\{
      \begin{array}{lr}
        \text{Unif}[-4, -1] & : j=1\\
@@ -391,7 +398,7 @@ In the second scenario, the treatment effect was heterogeneous across strata, an
        \text{Unif}[1, 4] & : j=3\\
      \end{array}
    \right.
-\end{displaymath} 
+\end{equation} 
 
 We generated independent and identically distributed errors $\varepsilon_{ij}$ and $\delta_{ij}$ and varied the error distribution. 
 The errors were either standard normal (to mimic the usual ANCOVA assumptions),
@@ -400,24 +407,31 @@ standard lognormal,
 or exponentially distributed, with scale parameter $1$ and shifted to have mean zero.
 The observed $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$ were independent across $i$ and $j$.
 
-We included $n_j=16$ individuals per stratum and treatment assignment was balanced, i.e. 8 people received each treatment in each stratum.
 After sampling $(v_{ij}, \varepsilon_{ij}, \delta_{ij})$, we constructed the baseline value for individual $i,j$ as 
-$$ X_{ij} = \frac{-\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \varepsilon_{ij}.$$
+\begin{equation}
+X_{ij} = \frac{-\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \varepsilon_{ij}.
+\end{equation}
 
 \noindent $\gamma$ was a fixed constant.
 Then we generated potential outcomes as
 
-$$Y_{ij}(Z_{ij}) = \frac{(2Z_{ij} - 1)\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \delta_{ij}.$$
+\begin{equation}
+Y_{ij}(Z_{ij}) = \frac{(2Z_{ij} - 1)\gamma e^{v_{ij}} + e^{v_{ij}/2}}{2} + \delta_{ij}.
+\end{equation}
 
 
 \noindent This is equivalent to the following linear data-generating process:
 
-$$Y_{ij}(Z_{ij}) = Z_{ij} \gamma e^{v_{ij}} + X_{ij} + (\delta_{ij} - \varepsilon_{ij}).$$
+\begin{equation}\label{eqn:sim1_lm}
+Y_{ij}(Z_{ij}) = Z_{ij} \gamma e^{v_{ij}} + X_{ij} + (\delta_{ij} - \varepsilon_{ij}).
+\end{equation}
 
 \noindent This model does not exactly match the ANCOVA Equation~\ref{eqn:ancova} and only some of the assumptions are satisfied:
 $Y$ is linear in $(X, Z)$ conditionally on the latent variable $v$, 
 the errors are independent and identically distributed, and are independent of $X$.
 When the latent variables vary in distribution across strata, the assumption of constant slopes is violated.
+ANCOVA tests the significance of the coefficient on the treatment indicator $Z_{ij}$, but Equation~\ref{eqn:sim1_lm}
+shows that this coefficient varies according to $v_{ij}$.
 
 
 We regenerated $Z$ and the potential outcomes $Y(Z)$ 10,000 times.
@@ -544,11 +558,11 @@ Instead of an additive treatment effect, now the effect is multiplicative.
 We generated the latent variable and errors in the same way, but let 
 
 
-\begin{align*}
+\begin{align}
 X_{ij} &=  \frac{ e^{v_{ij}} + e^{v_{ij}/2}}{2} +\varepsilon_{ij} \\
-Y_{ij}(Z_{ij}) &= (1+\gamma)^{Z_{ij}} X_{ij}  + \delta_{ij} \\
+Y_{ij}(Z_{ij}) &= (1+\gamma)^{Z_{ij}} X_{ij}  + \delta_{ij} \nonumber \\
 &= \gamma X_{ij}Z_{ij} + X_{ij} + \delta_{ij}.
-\end{align*}
+\end{align}
 
 The treatment effect for individual $(i, j)$ is thus $\gamma X_{ij}$.
 The stratified, unadjusted permutation test failed here:
@@ -644,7 +658,8 @@ daily\_dysp   & 0.582                      & 0.803                              
 
 
 This paper adds to the literature comparing parametric and nonparametric tests.
-We simulated a variety of data-generating processes under the potential outcomes model, ranging from the ideal case when treatment effects are homogeneous for all individuals, to cases when errors are heavy-tailed or heteroskedastic, data are discrete, effects vary across strata, and treatment assignment is imbalanced within groups.
+We simulated a variety of data-generating processes under the potential outcomes model, as opposed to assuming the parametric linear model framework.
+Scenarios ranged from the ideal case when treatment effects are homogeneous for all individuals, to cases when errors are heavy-tailed or heteroskedastic, data are discrete, effects vary across strata, and treatment assignment is imbalanced within groups.
 The linear regression based tests had comparable power in all circumstances.
 They all suffered a loss of power when the linear model was a poor fit to the data.
 The stratified permutation test appears to perform best when the correlation between the outcome and covariates is low, while using change scores as the dependent variable in the stratified permutation test works best when the correlation is high.
@@ -675,7 +690,9 @@ For instance, he points to the case where observations have unequal variances.
 This is a problem in practice as one cannot observe errors; it is a leap of faith to assert that they are homogeneous and therefore exchangeable.
 \cite{boik_fisherpitman_1987} illustrates this phenomenon using the traditional $F$ test and its permutation counterpart, 
 and demonstrates by simulation that the latter has larger than nominal level when the error variances are unequal.
-Randomized experiments mitigate this problem: by definition, treatment assignment is statistically independent of all other variables (possibly conditioning on strata) and in expectation over repeated randomizations, the two groups have equal variances.
+Randomized experiments mitigate this problem: 
+by definition, treatment assignment is statistically independent of all other variables (possibly conditioning on strata) and in expectation over repeated randomizations, the two groups have equal variances.
+Randomization guarantees this: it is a feature, not an assumption.
 
 It is important to note that the permutation tests described here are exact only in the context of randomized experiments.
 Treatment is assigned at random and is therefore statistically independent of the covariates $X$ and the errors $\varepsilon$.
