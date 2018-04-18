@@ -1,1 +1,1 @@
-This repository contains materials for the paper titled "A Comparison of Parametric and Permutation Tests for Regression Analysis of Randomized Experiments" by Kellie Ottoboni, Fraser Lewis, and Luigi Salmaso.
+This repository contains materials for the paper titled "An Empirical Comparison of Parametric and Permutation Tests for Regression Analysis of Randomized Experiments" by Kellie Ottoboni, Fraser Lewis, and Luigi Salmaso.
